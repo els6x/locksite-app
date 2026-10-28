@@ -1,0 +1,20 @@
+flowchart TD
+    U[Pengguna] --> UI[Jetpack Compose UI]
+    UI --> VM[ViewModel / StateFlow]
+    VM --> UC[Use Cases]
+    UC --> REPO[Blocklist Repository]
+    REPO --> DB[(Room Database)]
+    UC --> STATUS[Protection Status Monitor]
+    STATUS --> VPN[Android VpnService]
+    VPN --> TUN[TUN Interface / Packet Loop]
+    TUN --> IP[IP and UDP/TCP Handling]
+    IP --> DNS[DNS Parser]
+    DNS --> MATCH[Domain Matcher]
+    MATCH -->|Blocked| DENY[DNS Block Response]
+    MATCH -->|Allowed| RESOLVER[Configured DNS Resolver]
+    RESOLVER --> DNS
+    DENY --> DNS
+    DNS --> IP
+    IP --> TUN
+    VPN --> STATUS
+    STATUS --> VM

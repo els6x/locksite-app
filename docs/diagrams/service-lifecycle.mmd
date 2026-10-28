@@ -1,0 +1,13 @@
+stateDiagram-v2
+    [*] --> NotConfigured
+    NotConfigured --> PermissionPending: Pengguna mengaktifkan
+    PermissionPending --> Starting: Izin diberikan
+    PermissionPending --> NotConfigured: Izin ditolak
+    Starting --> Active: TUN dan DNS siap
+    Starting --> Error: Inisialisasi gagal
+    Active --> Reconnecting: Jaringan berubah
+    Reconnecting --> Active: Reconnect berhasil
+    Reconnecting --> Error: Reconnect gagal
+    Active --> Stopped: Service berhenti
+    Error --> Starting: Pengguna mencoba lagi
+    Stopped --> Starting: Aktivasi ulang

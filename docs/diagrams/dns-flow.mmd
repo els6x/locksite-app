@@ -1,0 +1,17 @@
+flowchart TD
+    A[DNS packet diterima melalui TUN] --> B{Paket dapat diproses?}
+    B -->|Tidak| C[Catat error teknis tanpa payload sensitif]
+    B -->|Ya| D[Parse header IP dan UDP/TCP]
+    D --> E{DNS query valid?}
+    E -->|Tidak| F[Tangani sesuai kebijakan protokol]
+    E -->|Ya| G[Normalisasi QNAME]
+    G --> H[Domain Matcher]
+    H --> I{Domain cocok dengan blocklist?}
+    I -->|Ya| J[Buat respons DNS penolakan]
+    I -->|Tidak| K[Forward ke resolver]
+    K --> L{Resolver berhasil?}
+    L -->|Ya| M[Validasi dan teruskan respons]
+    L -->|Tidak| N[Timeout / SERVFAIL sesuai desain]
+    J --> O[Kirim respons kembali melalui TUN]
+    M --> O
+    N --> O

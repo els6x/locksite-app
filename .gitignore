@@ -1,0 +1,31 @@
+# Gradle
+.gradle/
+build/
+local.properties
+
+# Android Studio / IntelliJ
+.idea/
+*.iml
+captures/
+.externalNativeBuild/
+.cxx/
+
+# Kotlin
+.kotlin/
+
+# Keystores and signing material
+*.jks
+*.keystore
+keystore.properties
+
+# Local AI assistant state (session logs, memory notes)
+.workbuddy-ai/
+
+# OS noise
+.DS_Store
+Thumbs.db
+
+# Build outputs
+*.apk
+*.aab
+*.ap_

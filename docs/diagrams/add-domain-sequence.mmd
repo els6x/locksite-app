@@ -1,0 +1,23 @@
+sequenceDiagram
+    actor User as Pengguna
+    participant UI as Compose UI
+    participant VM as ViewModel
+    participant Validator as Domain Validator
+    participant Repo as Repository
+    participant DB as Local Database
+
+    User->>UI: Memasukkan hostname
+    UI->>VM: Submit hostname
+    VM->>Validator: Validasi dan normalisasi
+    alt Input tidak valid
+        Validator-->>VM: Error validasi
+        VM-->>UI: Tampilkan pesan error
+    else Input valid
+        Validator-->>VM: Normalized domain
+        VM->>Repo: Tambah aturan terkunci
+        Repo->>DB: Insert transaksi
+        DB-->>Repo: Berhasil / duplikat
+        Repo-->>VM: Hasil operasi
+        VM-->>UI: Perbarui daftar
+        UI-->>User: Konfirmasi domain terkunci
+    end
