@@ -1,24 +1,42 @@
 package com.locksite.app.ui.theme
 
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 
 /**
- * Minimal Material 3 theme.
+ * Single light scheme that matches the reference design.
  *
- * A full design system (typography, spacing, semantic status colours) is defined in M1.
- * Status must never be conveyed by colour alone (PRD NFR-005).
+ * Dark mode is intentionally not implemented in M1: the palette is a light pastel
+ * system and inventing a dark variant would need its own contrast pass. Tracked as a
+ * known limitation in docs/DESIGN_SYSTEM.md.
  */
+private val LockSiteColorScheme = lightColorScheme(
+    primary = LockSiteColors.Yellow,
+    onPrimary = LockSiteColors.YellowInk,
+    secondary = LockSiteColors.Teal,
+    onSecondary = LockSiteColors.TealInk,
+    tertiary = LockSiteColors.Green,
+    onTertiary = LockSiteColors.GreenInk,
+    background = LockSiteColors.Canvas,
+    onBackground = LockSiteColors.Ink,
+    surface = LockSiteColors.Surface,
+    onSurface = LockSiteColors.Ink,
+    surfaceVariant = LockSiteColors.SurfaceMuted,
+    onSurfaceVariant = LockSiteColors.InkMuted,
+    outline = LockSiteColors.Outline,
+    outlineVariant = LockSiteColors.Outline,
+    error = LockSiteColors.Danger,
+    onError = LockSiteColors.Surface,
+    errorContainer = LockSiteColors.DangerSurface,
+    onErrorContainer = LockSiteColors.Danger,
+)
+
 @Composable
-fun LockSiteTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
-    content: @Composable () -> Unit,
-) {
+fun LockSiteTheme(content: @Composable () -> Unit) {
     MaterialTheme(
-        colorScheme = if (darkTheme) darkColorScheme() else lightColorScheme(),
+        colorScheme = LockSiteColorScheme,
+        typography = LockSiteTypography,
         content = content,
     )
 }

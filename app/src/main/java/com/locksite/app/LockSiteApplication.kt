@@ -3,9 +3,11 @@ package com.locksite.app
 import android.app.Application
 
 /**
- * Process-wide entry point.
+ * Process-wide entry point and owner of the manual dependency graph.
  *
- * M0 keeps this class intentionally empty: no dependency-injection container, no
- * analytics, no network initialisation. Services and repositories are wired in M1/M3.
+ * No analytics, no network initialisation: the app never phones home.
  */
-class LockSiteApplication : Application()
+class LockSiteApplication : Application() {
+
+    val container: AppContainer by lazy { AppContainer(this) }
+}

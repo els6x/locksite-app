@@ -7,8 +7,9 @@ Blokir dilakukan dengan **filter DNS lokal** melalui `VpnService`. Semua aturan 
 di perangkat: tidak ada akun, tidak ada cloud, tidak ada analytics, tidak ada riwayat
 browsing yang dikirim ke mana pun.
 
-> **Status: M0 (fondasi).** Yang ada saat ini hanya kerangka proyek yang bisa dibangun.
-> Filter VPN/DNS **belum ada** dan belum ada klaim pemblokiran apa pun.
+> **Status: M1 (UI + blocklist lokal).** Onboarding, dashboard, tambah domain, daftar domain
+> terkunci, dan penyimpanan lokal sudah ada. Filter VPN/DNS **belum ada**, jadi status
+> perlindungan masih ditampilkan "Belum aktif" secara jujur — belum ada klaim pemblokiran.
 
 ## Batasan yang perlu dipahami
 

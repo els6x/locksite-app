@@ -47,13 +47,45 @@ Rules:
 - `presentation` never touches the database or a socket directly.
 - `vpn`/`dns` never write to the database directly; they read a snapshot of rules.
 
-## 3. Data model (planned, M1)
+## 3. Data model (implemented in M1)
 
-Table `locked_domains`: `id`, `hostname_normalized` (unique), `include_subdomains`,
-`created_at`, `state` (only `LOCKED`). Storage choice (Room vs DataStore) is decided in
-M1; Room is the likely choice because uniqueness, transactions and migrations matter.
+Room database `locksite.db`, version 1, schema exported to `app/schemas/`.
 
-## 4. Network design (planned, M2)
+Table `locked_domains`: `id` (PK, autoincrement), `hostname_normalized` (unique index),
+`include_subdomains`, `created_at`, `state` (only `LOCKED`).
+
+Decisions:
+
+- **Room, not DataStore.** The blocklist needs a unique constraint, a transactional insert
+  and a diffable schema. A preferences file would have to reimplement all three in memory.
+- **No `@Delete` / `@Update` in the DAO.** The only write path is `@Insert`. Removing a row
+  is not an operation the production code can express.
+- **Duplicate detection is the database's job**, not the UI's: the unique index aborts the
+  insert and the repository maps that to `AddOutcome.DUPLICATE`.
+- **No destructive fallback.** `fallbackToDestructiveMigration` is deliberately absent: a
+  failed migration must surface as an error, never as an empty (and therefore "safe") list.
+
+### KSP + built-in Kotlin caveat
+
+AGP 9 forbids the `kotlin.sourceSets` DSL that KSP uses to register generated sources.
+`android.disallowKotlinSourceSets=false` in `gradle.properties` is the documented escape
+hatch. Revisit when KSP supports built-in Kotlin natively; remove the flag then.
+
+### Repository port
+
+`domain/repository/BlocklistRepository.kt` is the interface (pure Kotlin);
+`data/repository/RoomBlocklistRepository.kt` is the implementation. This adds a
+`domain/repository` package that the PRD folder list did not enumerate — the alternative
+was letting the domain depend on the data layer.
+
+## 4. Navigation (implemented in M1)
+
+`navigation-compose` with five destinations: `onboarding`, `home`, `add-domain`,
+`locked-list`, `settings`. The bottom bar exposes only the three top-level destinations and
+is hidden on onboarding and on add-domain, where a single task should not compete with
+navigation.
+
+## 5. Network design (planned, M2)
 
 MVP uses a local TUN interface with DNS interception:
 
@@ -75,14 +107,14 @@ MVP uses a local TUN interface with DNS interception:
 - Own parser vs audited third-party TUN/DNS library (licence + maintenance review).
 - Physical test device and its Android version.
 
-## 5. Status model
+## 6. Status model
 
 UI status is derived from the real service state, not from a stored flag:
 
 `NotConfigured → PermissionPending → Starting → Active | Error`, plus `Reconnecting`
 and `Stopped`. Failure to read the blocklist is an **error**, never "empty = safe".
 
-## 6. Build commands
+## 7. Build commands
 
 ```bash
 ./gradlew assembleDebug        # build debug APK

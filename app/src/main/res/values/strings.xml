@@ -1,4 +1,95 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">LockSite</string>
+
+    <!-- Onboarding -->
+    <string name="onboarding_headline">Kunci domain yang mengganggu fokusmu</string>
+    <string name="onboarding_sub">LockSite memblokir domain lewat filter DNS lokal di perangkat. Daftar domain tidak pernah dikirim ke mana pun.</string>
+    <string name="onboarding_point_1_title">Terkunci dari antarmuka</string>
+    <string name="onboarding_point_1_body">Domain yang sudah dikunci tidak punya tombol hapus atau buka blokir.</string>
+    <string name="onboarding_point_2_title">Butuh izin VPN lokal</string>
+    <string name="onboarding_point_2_body">Android akan meminta persetujuan sebelum filter berjalan. Trafik tidak diteruskan ke server mana pun.</string>
+    <string name="onboarding_point_3_title">Bukan perlindungan absolut</string>
+    <string name="onboarding_point_3_body">DNS-over-HTTPS, VPN lain, proxy, atau akses langsung lewat IP masih bisa menembusnya.</string>
+    <string name="onboarding_cta">Mulai atur</string>
+    <string name="onboarding_footnote">Koneksi selalu bisa dipulihkan lewat pengaturan VPN Android.</string>
+
+    <!-- Navigation -->
+    <string name="nav_home">Beranda</string>
+    <string name="nav_list">Daftar</string>
+    <string name="nav_settings">Pengaturan</string>
+
+    <!-- Dashboard -->
+    <string name="dashboard_greeting">Halo!</string>
+    <string name="dashboard_lead">Kendalikan akses impulsif, satu domain setiap kali.</string>
+    <string name="dashboard_status_title">Status perlindungan</string>
+    <string name="dashboard_status_note_m1">Filter VPN belum tersedia di versi ini. Aktivasi menyusul pada tahap berikutnya.</string>
+    <string name="dashboard_locked_count">Domain terkunci</string>
+    <string name="dashboard_locked_unit">domain</string>
+    <string name="dashboard_add_domain">Tambah domain</string>
+    <string name="dashboard_view_list">Lihat daftar</string>
+    <string name="dashboard_empty_hint">Belum ada domain terkunci. Mulai dari satu domain yang paling sering mengganggu.</string>
+    <string name="dashboard_last_added">Terakhir dikunci</string>
+
+    <!-- Protection status -->
+    <string name="status_not_configured">Belum aktif</string>
+    <string name="status_permission_pending">Menunggu izin VPN</string>
+    <string name="status_active">Perlindungan aktif</string>
+    <string name="status_error">Mengalami gangguan</string>
+    <string name="status_stopped">Dihentikan</string>
+    <string name="status_conflict">Bentrok dengan VPN lain</string>
+
+    <!-- Add domain -->
+    <string name="add_title">Tambah domain</string>
+    <string name="add_field_label">Hostname</string>
+    <string name="add_field_placeholder">instagram.com</string>
+    <string name="add_scope_title">Cakupan</string>
+    <string name="add_scope_body">Semua subdomain ikut diblokir, misalnya www.instagram.com dan m.instagram.com.</string>
+    <string name="add_lock_button">Kunci domain</string>
+    <string name="add_confirm_title">Kunci permanen?</string>
+    <string name="add_confirm_body">%1$s akan diblokir dan tidak bisa dihapus dari aplikasi ini.</string>
+    <string name="add_confirm_warning">Pastikan domainnya tepat. Domain yang terlalu luas bisa ikut memblokir layanan lain seperti login atau CDN.</string>
+    <string name="add_confirm_yes">Ya, kunci permanen</string>
+    <string name="add_confirm_cancel">Batal</string>
+    <string name="add_success">%1$s terkunci</string>
+    <string name="add_duplicate">%1$s sudah terkunci sebelumnya.</string>
+    <string name="add_error">Gagal menyimpan. Coba lagi.</string>
+
+    <!-- Validation -->
+    <string name="err_empty">Masukkan hostname dulu.</string>
+    <string name="err_scheme">Hanya hostname, tanpa https:// atau garis miring.</string>
+    <string name="err_space">Hostname tidak boleh mengandung spasi.</string>
+    <string name="err_chars">Gunakan hanya huruf, angka, titik, dan tanda hubung.</string>
+    <string name="err_no_dot">Sertakan domain lengkap, misalnya example.com.</string>
+    <string name="err_label_len">Satu bagian domain maksimal 63 karakter.</string>
+    <string name="err_too_long">Hostname terlalu panjang.</string>
+    <string name="err_tld">Akhiran domain tidak valid.</string>
+    <string name="err_ip">Alamat IP tidak didukung. Masukkan nama domain.</string>
+    <string name="err_non_ascii">Gunakan huruf latin biasa, bukan karakter khusus.</string>
+    <string name="err_dots">Titik tidak boleh berurutan.</string>
+
+    <!-- Blocklist -->
+    <string name="list_title">Domain terkunci</string>
+    <string name="list_subtitle">Tidak ada tombol hapus. Itu memang disengaja.</string>
+    <string name="list_locked_badge">Terkunci</string>
+    <string name="list_added_on">Ditambahkan %1$s</string>
+    <string name="list_empty_title">Belum ada domain</string>
+    <string name="list_empty_body">Domain yang kamu kunci akan muncul di sini dan tidak bisa dihapus dari aplikasi.</string>
+    <string name="list_search_hint">Cari domain</string>
+    <string name="list_no_result">Tidak ada domain yang cocok.</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Pengaturan</string>
+    <string name="settings_about_title">Tentang aplikasi</string>
+    <string name="settings_version">Versi %1$s</string>
+    <string name="settings_privacy_title">Privasi</string>
+    <string name="settings_privacy_body">Semua aturan disimpan di perangkat ini. Tidak ada akun, cloud, atau analytics. Tidak ada riwayat situs yang dicatat.</string>
+    <string name="settings_recovery_title">Cara pemulihan</string>
+    <string name="settings_recovery_body">Buka Pengaturan Android → Jaringan → VPN → matikan LockSite. Jika masih macet, hentikan paksa aplikasi lewat pengaturan sistem. Langkah ini bukan fitur untuk membuka blokir dari dalam aplikasi.</string>
+    <string name="settings_limit_title">Batas perlindungan</string>
+    <string name="settings_limit_body">Blokir berbasis DNS tidak menangkap semua jalur: DNS-over-HTTPS, proxy, VPN lain, cache DNS, dan akses langsung via IP bisa menembusnya.</string>
+
+    <!-- Common -->
+    <string name="action_back">Kembali</string>
+    <string name="action_close">Tutup</string>
 </resources>
