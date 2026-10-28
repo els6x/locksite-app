@@ -48,10 +48,12 @@
     <!-- VPN service -->
     <string name="vpn_error_tunnel">Tidak bisa membuat antarmuka VPN.</string>
     <string name="vpn_error_blocklist">Daftar domain tidak terbaca, jadi perlindungan tidak dijalankan.</string>
+    <string name="vpn_error_rules_stale">Daftar domain tidak bisa diperbarui. Filter masih berjalan dengan aturan terakhir.</string>
     <string name="vpn_error_revoked">Dihentikan dari pengaturan Android.</string>
     <string name="vpn_error_start">Layanan filter tidak bisa dijalankan. Buka aplikasi lalu coba lagi.</string>
     <string name="vpn_error_permission">Izin VPN belum diberikan. Ketuk Aktifkan perlindungan untuk mencoba lagi.</string>
     <string name="vpn_error_tunnel_lost">Koneksi filter terputus. Aktifkan ulang perlindungan.</string>
+    <string name="vpn_error_conflict">VPN lain sedang aktif, jadi filter ini tidak bisa berjalan.</string>
 
     <!-- Add domain -->
     <string name="add_title">Tambah domain</string>
@@ -102,6 +104,37 @@
     <string name="settings_recovery_body">Buka Pengaturan Android → Jaringan → VPN → matikan LockSite. Jika masih macet, hentikan paksa aplikasi lewat pengaturan sistem. Langkah ini bukan fitur untuk membuka blokir dari dalam aplikasi.</string>
     <string name="settings_limit_title">Batas perlindungan</string>
     <string name="settings_limit_body">Blokir berbasis DNS tidak menangkap semua jalur: DNS-over-HTTPS, proxy, VPN lain, cache DNS, dan akses langsung via IP bisa menembusnya.</string>
+    <string name="settings_diagnostics_open">Buka diagnostik</string>
+
+    <!-- Diagnostics -->
+    <string name="diagnostics_title">Diagnostik</string>
+    <string name="diagnostics_service_title">Status layanan</string>
+    <string name="diagnostics_permission_title">Izin VPN</string>
+    <string name="diagnostics_permission_granted">Diberikan</string>
+    <string name="diagnostics_permission_missing">Belum diberikan</string>
+    <string name="diagnostics_foreign_vpn_title">VPN lain</string>
+    <string name="diagnostics_foreign_vpn_present">Ada VPN lain aktif</string>
+    <string name="diagnostics_foreign_vpn_none">Tidak ada</string>
+    <string name="diagnostics_locked_count_title">Domain terkunci</string>
+    <string name="diagnostics_unknown">Tidak diketahui</string>
+    <string name="diagnostics_test_title">Tes filter lokal</string>
+    <string name="diagnostics_test_body">Menguji jalur keputusan filter di dalam aplikasi memakai daftar domain saat ini. Tes ini tidak membuka koneksi jaringan.</string>
+    <string name="diagnostics_test_run">Jalankan tes filter</string>
+    <string name="diagnostics_test_running">Menjalankan tes…</string>
+    <string name="diagnostics_test_no_rules">Belum ada domain terkunci untuk diuji.</string>
+    <string name="diagnostics_test_block_check">Domain terkunci ditolak</string>
+    <string name="diagnostics_test_allow_check">Domain lain diteruskan</string>
+    <string name="diagnostics_test_blocklist_error">Daftar domain tidak terbaca. Perlindungan tidak bisa dipastikan.</string>
+    <string name="diagnostics_check_ok">Lulus</string>
+    <string name="diagnostics_check_failed">Gagal</string>
+    <string name="diagnostics_check_skipped">Tidak diuji</string>
+    <string name="diagnostics_check_line">%1$s — %2$s</string>
+    <string name="diagnostics_note_idle">Filter DNS belum berjalan. Kembali ke Beranda untuk mengaktifkannya.</string>
+    <string name="diagnostics_note_stopped">Perlindungan dihentikan. Kembali ke Beranda untuk mengaktifkannya lagi.</string>
+    <string name="diagnostics_refresh">Periksa ulang</string>
+    <string name="diagnostics_recovery_title">Kalau koneksi bermasalah</string>
+    <string name="diagnostics_recovery_body">Buka Pengaturan Android → Jaringan → VPN → matikan LockSite. Jika masih macet, hentikan paksa aplikasi lewat pengaturan sistem. Ini jalur darurat sistem, bukan tombol buka blokir.</string>
+    <string name="diagnostics_last_check">Terakhir diperiksa %1$s</string>
 
     <!-- Common -->
     <string name="action_back">Kembali</string>

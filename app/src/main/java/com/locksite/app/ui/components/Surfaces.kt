@@ -75,6 +75,28 @@ fun EmptyHint(
     }
 }
 
+/** Title + explanatory paragraph on a flat card. Used by Settings and Diagnostics. */
+@Composable
+fun InfoCard(
+    title: String,
+    body: String,
+    modifier: Modifier = Modifier,
+) {
+    SoftCard(modifier = modifier.fillMaxWidth()) {
+        Text(
+            text = title,
+            style = LockSiteTypography.titleMedium,
+            color = LockSiteColors.Ink,
+        )
+        Text(
+            text = body,
+            modifier = Modifier.padding(top = Spacing.s),
+            style = LockSiteTypography.bodyMedium,
+            color = LockSiteColors.InkMuted,
+        )
+    }
+}
+
 @Composable
 fun CenteredNote(text: String, modifier: Modifier = Modifier) {
     Text(

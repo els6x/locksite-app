@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.locksite.app.R
 import com.locksite.app.domain.model.ProtectionStatus
+import com.locksite.app.presentation.common.ProtectionStatusText
 import com.locksite.app.ui.components.CardGap
 import com.locksite.app.ui.components.EmptyHint
 import com.locksite.app.ui.components.GhostButton
@@ -190,14 +191,14 @@ private fun StatusCard(
         )
         Spacer(Modifier.height(Spacing.s))
         Text(
-            text = stringResource(statusLabel(status)),
+            text = stringResource(ProtectionStatusText.label(status)),
             style = LockSiteTypography.headlineMedium,
             color = LockSiteColors.TealInk,
         )
         Spacer(Modifier.height(Spacing.m))
         // A sentence, not a chip: the note explains the state and can wrap to two lines.
         Text(
-            text = statusDetail ?: stringResource(statusNote(status)),
+            text = statusDetail ?: stringResource(ProtectionStatusText.note(status)),
             style = LockSiteTypography.bodyMedium,
             color = LockSiteColors.TealInk.copy(alpha = 0.8f),
         )
@@ -210,24 +211,6 @@ private fun StatusCard(
             )
         }
     }
-}
-
-private fun statusLabel(status: ProtectionStatus): Int = when (status) {
-    ProtectionStatus.NOT_CONFIGURED -> R.string.status_not_configured
-    ProtectionStatus.PERMISSION_PENDING -> R.string.status_permission_pending
-    ProtectionStatus.ACTIVE -> R.string.status_active
-    ProtectionStatus.ERROR -> R.string.status_error
-    ProtectionStatus.STOPPED -> R.string.status_stopped
-    ProtectionStatus.CONFLICT_WITH_OTHER_VPN -> R.string.status_conflict
-}
-
-private fun statusNote(status: ProtectionStatus): Int = when (status) {
-    ProtectionStatus.NOT_CONFIGURED -> R.string.dashboard_note_idle
-    ProtectionStatus.PERMISSION_PENDING -> R.string.dashboard_note_permission
-    ProtectionStatus.ACTIVE -> R.string.dashboard_note_active
-    ProtectionStatus.ERROR -> R.string.dashboard_note_error
-    ProtectionStatus.STOPPED -> R.string.dashboard_note_stopped
-    ProtectionStatus.CONFLICT_WITH_OTHER_VPN -> R.string.dashboard_note_conflict
 }
 
 @Preview(showBackground = true)

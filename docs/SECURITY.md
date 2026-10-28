@@ -1,21 +1,22 @@
 # Security & Privacy — LockSite
 
-Scope: M2. This document describes the intended security posture. The DNS filter is
-implemented and unit-tested, but **has not been verified on a real network** — nothing
-here is a claim that blocking currently works end to end.
+Scope: M3. This document describes the intended security posture. The DNS filter is
+implemented, wired to the blocklist and unit-tested, but **has not been verified on a real
+network** — nothing here is a claim that blocking currently works end to end.
 
 ## 1. Privacy invariants
 
 | Invariant | Enforcement |
 |---|---|
 | Blocklist never leaves the device | No account, no sync, no backend; the only socket opened is the DNS forwarder |
-| `INTERNET` permission is used for one thing only | Relaying allowed DNS queries to `1.1.1.1`; no HTTP client exists in the app |
-| No browsing history collected | Only aggregate block counters, never QNAME history |
+| `INTERNET` is used for one thing only | Relaying allowed DNS queries to `1.1.1.1`; no HTTP client exists in the app |
+| `ACCESS_NETWORK_STATE` is read-only | Used only to tell "another VPN owns the tunnel" apart from "the interface failed"; it exposes no network content |
+| No browsing history collected | Only aggregate counts, never QNAME history |
 | No DNS payloads in logs | Log technical status only (state changes, error codes) |
 | No analytics/ads SDK | Prohibited in `AGENTS.md` |
 | No cloud backup of the blocklist | `allowBackup=false`, `data_extraction_rules.xml` excludes all domains |
 
-### Change from M0: `INTERNET` permission added
+### Change from M0: `INTERNET` permission added (M2)
 
 M0 shipped with no `INTERNET` permission at all, which made "the app cannot phone home"
 structurally true. M2 cannot keep that: forwarding an allowed DNS query requires a socket.
@@ -26,6 +27,13 @@ What still holds: there is no HTTP client, no telemetry SDK, no analytics, no ba
 no code path that sends anything to the developer. The only outbound packets are DNS
 queries to the configured resolver. Any future network use must be justified in an ADR and
 reviewed here first.
+
+### Change in M3: `ACCESS_NETWORK_STATE` added
+
+Conflict detection (PRD FR-030) needs to know whether a VPN transport is active on the
+default network; `ConnectivityManager.getNetworkCapabilities` requires this normal
+permission. It is used read-only in two places: classifying a failed `establish()`, and
+showing the "VPN lain" fact on the diagnostics screen. It is never used to inspect traffic.
 
 ## 2. Threat model (summary)
 
@@ -39,6 +47,7 @@ reviewed here first.
 | Malformed or hostile packets | Length validation, bounded parsing, compression pointers only accepted backwards, per-packet exception containment | Parser bugs could still crash the process |
 | Spoofed DNS response | Transaction ID, QR bit and sender address validated before relaying | Off-path spoofing remains possible |
 | One bad packet kills the tunnel | Every packet is handled inside its own failure boundary; writes are per-packet | A bug in the read loop itself would still stop filtering |
+| Diagnostics leaks browsing data | Self-test uses a synthetic query and a reserved `.invalid` probe; only aggregate counts are shown | None known |
 
 **Positioning:** the product must never claim that blocking cannot be bypassed. The
 device owner always retains system-level control (VPN settings, force-stop, uninstall,
@@ -52,26 +61,8 @@ factory reset).
   consequences and the fact that allowed queries leave the device.
 - The forwarder socket is excluded from the tunnel with `VpnService.protect`, so a query
   cannot be captured by the interface that is answering it.
-- Third-party TUN/DNS libraries: none adopted in M2. If one is ever added, licence,
-  maintenance activity and open security issues must be reviewed and the version pinned.
-
-## 4. Recovery (must be documented for users)
-
-1. Android Settings → Network → VPN → disable LockSite.
-2. If the service is stuck: force-stop the app from system settings.
-3. If that fails: clear app data or uninstall.
-4. Uninstalling may remove local configuration — this is expected.
-
-These are OS recovery paths, not a feature of the app. The app must never make them
-harder to reach.
-
-## 5. Logging rules
-
-- Allowed: service state transitions, error codes, counts, timestamps.
-- Forbidden: hostnames queried, DNS payloads, IP addresses of visited sites, device
-  identifiers.
-- Debug-only reset tooling must live in `debug` sources and never ship in release.
-
+- Third-party TUN/DNS libraries: none adopted. If one is ever added, licence, maintenance
+  activity and open security issues must be reviewed and the version pinned.
 
 ## 4. Recovery (must be documented for users)
 

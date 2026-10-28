@@ -107,6 +107,7 @@ class LockSiteVpnService : VpnService() {
         if (tunnel != null) {
             // Already filtering. Re-publish the real state: the caller has just set
             // PERMISSION_PENDING, and leaving it there would hang the UI forever.
+            controller.setOwnTunnelUp(true)
             controller.publish(currentStatus(), currentDetail())
             return
         }
@@ -137,12 +138,22 @@ class LockSiteVpnService : VpnService() {
         }
 
         if (descriptor == null) {
-            controller.publish(ProtectionStatus.ERROR, getString(R.string.vpn_error_tunnel))
+            // Android allows only one VPN. Saying "could not create the interface" would
+            // hide the real cause and send the user hunting for a bug that is not there.
+            if (controller.hasForeignVpn()) {
+                controller.publish(
+                    ProtectionStatus.CONFLICT_WITH_OTHER_VPN,
+                    getString(R.string.vpn_error_conflict),
+                )
+            } else {
+                controller.publish(ProtectionStatus.ERROR, getString(R.string.vpn_error_tunnel))
+            }
             stopSelf()
             return
         }
 
         tunnel = descriptor
+        controller.setOwnTunnelUp(true)
         observeRules()
         readJob = serviceScope.launch { readLoop(descriptor) }
         // Published only once the read loop actually exists.
@@ -187,7 +198,7 @@ class LockSiteVpnService : VpnService() {
                 rulesHealthy = false
                 container.vpnController.publish(
                     ProtectionStatus.ERROR,
-                    getString(R.string.vpn_error_blocklist),
+                    getString(R.string.vpn_error_rules_stale),
                 )
             }
         }
@@ -231,6 +242,7 @@ class LockSiteVpnService : VpnService() {
         // Reaching this point while still active means the tunnel died without us asking.
         // Staying silent here would leave the UI showing "active" over a dead filter.
         if (job.isActive && !revoked) {
+            container.vpnController.setOwnTunnelUp(false)
             container.vpnController.publish(
                 ProtectionStatus.ERROR,
                 getString(R.string.vpn_error_tunnel_lost),
@@ -293,6 +305,7 @@ class LockSiteVpnService : VpnService() {
     /** The user turned the VPN off from Android settings, or another VPN took over. */
     override fun onRevoke() {
         revoked = true
+        container.vpnController.setOwnTunnelUp(false)
         container.vpnController.publish(
             ProtectionStatus.STOPPED,
             getString(R.string.vpn_error_revoked),
@@ -310,6 +323,7 @@ class LockSiteVpnService : VpnService() {
         rulesJob?.cancel()
         startJob?.cancel()
         tunnel = null
+        container.vpnController.setOwnTunnelUp(false)
 
         // A service that died while "starting" must not leave the UI waiting forever.
         val status = container.vpnController.status.value

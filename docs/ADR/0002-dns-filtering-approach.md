@@ -100,14 +100,18 @@ than silence, so it fails fast instead of hanging.
 **Accepted limitations (recorded, not hidden):**
 
 - DNS over TCP is not implemented. A response too large for UDP is truncated; the client's
-  TCP retry gets no answer. Tracked for M3.
+  TCP retry gets no answer. Remains a documented limitation after M3 (D-08).
 - DNS-over-TLS / DNS-over-HTTPS configured by the user or an app bypasses the filter.
 - Private DNS set to "Automatic" on the device may attempt DoT to the virtual resolver.
   It fails and falls back to plaintext, but it is worth checking on the test device.
 - Direct IP access is not filtered (no DNS query is involved).
 - The service does not call `startForeground`. The system VPN notification keeps the
   process alive; this must be verified across reboot and process death in M4.
-- `CONFLICT_WITH_OTHER_VPN` is defined in the status model but not yet detected.
+- `CONFLICT_WITH_OTHER_VPN` is detected since M3: consent denied while another VPN is
+  active, or `establish()` fails with a VPN transport present. Detection needs the
+  read-only `ACCESS_NETWORK_STATE` permission and opens no socket. The failed-`establish()`
+  case is correlation, not proof of cause: a VPN that has just started may not yet be the
+  active network, in which case the failure is reported as ERROR instead.
 
 **Verified in M2:** build, unit tests, lint. **Not verified:** real network behaviour on a
 physical device. No claim of working blocking is made until that test is run.

@@ -1,8 +1,9 @@
 # Technical Design — LockSite
 
-Status: M2 complete. The DNS filter is implemented and unit-tested; **real-network
-verification on a physical device has not been performed yet**, so no claim is made that
-blocking works end to end.
+Status: M3 complete. The DNS filter is wired to the blocklist, the status is reported from
+the real service, and a diagnostics screen exposes the facts the app can observe.
+**Real-network verification on a physical device has not been performed yet**, so no claim
+is made that blocking works end to end.
 
 ## 1. Toolchain (verified on the development machine)
 
@@ -143,7 +144,6 @@ client fails fast instead of hanging.
 
 - DNS over TCP (the client's retry after TC=1 gets no answer).
 - IPv6 extension header chains, IP fragmentation reassembly, ICMP.
-- `CONFLICT_WITH_OTHER_VPN` detection.
 - Foreground service / restart-after-boot behaviour (M4).
 
 ## 6. Status model
@@ -164,10 +164,31 @@ Nothing is persisted. If the process dies, the status resets to `NOT_CONFIGURED`
 is the truth, because the tunnel died with it. Failure to read the blocklist is an
 **error**, never "empty = safe".
 
-`CONFLICT_WITH_OTHER_VPN` exists in the model but is not produced yet; detection lands in
-M3/M4 together with system-level verification.
+`CONFLICT_WITH_OTHER_VPN` is produced when the filter cannot run because another VPN owns
+the tunnel: consent is denied while a VPN transport is active, or `establish()` returns
+`null` with a VPN transport present. Detection uses `ConnectivityManager` and the read-only
+`ACCESS_NETWORK_STATE` permission. `VpnController.refreshConflictState()` clears a stale
+conflict once the other VPN is gone, and never touches a running or starting service.
 
-## 7. Build commands
+## 7. Diagnostics (implemented in M3)
+
+`presentation/diagnostics/` renders PRD FR-031 without inventing data:
+
+| Field | Source |
+|---|---|
+| Service state | `VpnController.status`, pushed by the service |
+| VPN consent | `VpnService.prepare(context) == null` |
+| Another VPN | `ConnectivityManager` VPN transport, only while this app is not active |
+| Locked count | `BlocklistRepository.observeCount()`; a failed read shows "unknown", never 0 |
+| Self-test | `DiagnosticsSelfTest` — pure, in-process, no socket |
+
+The self-test builds a wire query, runs it through the real `DnsQueryHandler` with the live
+rule snapshot, and checks that a locked name is blocked while a reserved `.invalid` probe is
+forwarded. It proves the wiring, not the TUN path: that still requires D-01…D-05 on a
+device. `presentation/common/ProtectionStatusText` is the single status→string mapping, so
+every state is covered and testable without Compose.
+
+## 8. Build commands
 
 ```bash
 ./gradlew assembleDebug        # build debug APK

@@ -9,9 +9,13 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -24,6 +28,8 @@ import com.locksite.app.presentation.blocklist.BlocklistScreen
 import com.locksite.app.presentation.blocklist.BlocklistViewModel
 import com.locksite.app.presentation.dashboard.DashboardScreen
 import com.locksite.app.presentation.dashboard.DashboardViewModel
+import com.locksite.app.presentation.diagnostics.DiagnosticsScreen
+import com.locksite.app.presentation.diagnostics.DiagnosticsViewModel
 import com.locksite.app.presentation.onboarding.OnboardingScreen
 import com.locksite.app.presentation.settings.SettingsScreen
 import com.locksite.app.ui.components.BottomDestination
@@ -42,6 +48,20 @@ fun LockSiteApp(container: AppContainer) {
     val navController = rememberNavController()
     val startDestination = remember {
         if (container.onboardingStore.isCompleted()) Routes.HOME else Routes.ONBOARDING
+    }
+
+    // A conflict with another VPN is an external fact. Re-check it whenever the app comes
+    // back to the foreground so the dashboard cannot keep saying "Bentrok" after the other
+    // VPN was turned off (PRD FR-030).
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                container.vpnController.refreshConflictState()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
     val backStackEntry by navController.currentBackStackEntryAsState()
@@ -161,7 +181,19 @@ fun LockSiteApp(container: AppContainer) {
             }
 
             composable(Routes.SETTINGS) {
-                SettingsScreen()
+                SettingsScreen(
+                    onOpenDiagnostics = { navController.navigate(Routes.DIAGNOSTICS) },
+                )
+            }
+
+            composable(Routes.DIAGNOSTICS) {
+                val viewModel: DiagnosticsViewModel = viewModel {
+                    DiagnosticsViewModel(container.blocklistRepository, container.vpnController)
+                }
+                DiagnosticsScreen(
+                    viewModel = viewModel,
+                    onBack = { navController.popBackStack() },
+                )
             }
         }
     }

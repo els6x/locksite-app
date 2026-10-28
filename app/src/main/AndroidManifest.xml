@@ -2,13 +2,17 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <!--
-        M2 adds exactly two capabilities:
-        - INTERNET: required to relay allowed DNS queries to the upstream resolver.
-          Nothing else in the app opens a socket; there is no telemetry and no backend.
+        Capabilities, each with one purpose:
+        - INTERNET: relay allowed DNS queries to the upstream resolver. Nothing else in
+          the app opens a socket; there is no telemetry and no backend.
+        - ACCESS_NETWORK_STATE: read-only check for an active VPN transport, used to tell
+          "another VPN owns the tunnel" apart from "the interface could not be created".
+          It grants no access to network content.
         - BIND_VPN_SERVICE on the filter service, so only the system can start it.
         The app still stores the blocklist on-device and never uploads it.
     -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <application
         android:name=".LockSiteApplication"

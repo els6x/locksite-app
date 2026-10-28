@@ -1,7 +1,8 @@
 # Test Plan — LockSite
 
-Status: M2. The pure DNS/packet layer is covered by JVM unit tests. Everything that
-requires a real network or a real device is still open and is marked as such.
+Status: M3. The pure DNS/packet layer and the filter wiring are covered by JVM unit tests.
+Everything that requires a real network or a real device is still open and is marked as
+such.
 
 ## 1. Unit tests (JVM, no device)
 
@@ -17,7 +18,7 @@ requires a real network or a real device is still open and is marked as such.
 | U-08 | Suffix guard: `example.com.attacker.test` does **not** match | M1 | pass |
 | U-09 | IDN policy behaves as documented | M1 | pass |
 | U-10 | Repository insert is transactional; failure leaves no partial row | M1 | pass |
-| U-11 | Service state → UI status mapping (all six states) | M3 | open |
+| U-11 | Service state → UI status mapping (all six states) | M3 | pass |
 | U-12 | DNS header/question parsing, including compression pointers | M2 | pass |
 | U-13 | Malformed DNS input rejected (truncated, reserved label, over-long name) | M2 | pass |
 | U-14 | NXDOMAIN reply echoes the question and carries no answer record | M2 | pass |
@@ -26,6 +27,10 @@ requires a real network or a real device is still open and is marked as such.
 | U-17 | Blocked name answered locally; allowed name forwarded | M2 | pass |
 | U-18 | Forwarder validates transaction ID, QR bit and sender | M2 | pass |
 | U-19 | Forwarder times out instead of hanging | M2 | pass |
+| U-20 | Diagnostics self-test blocks a locked probe and forwards an allowed probe | M3 | pass |
+| U-21 | Diagnostics self-test reports failure when every candidate probe is locked | M3 | pass |
+| U-22 | Every `ProtectionStatus` maps to a distinct label and a distinct note | M3 | pass |
+| U-23 | Foreign-VPN resolution: own tunnel never foreign; unknown transport stays unknown | M3 | pass |
 
 ## 2. DNS tests (device / instrumentation)
 
@@ -97,3 +102,14 @@ as working.
 | `./gradlew assembleDebug` | BUILD SUCCESSFUL |
 | `./gradlew lintDebug` | 0 errors, 9 warnings (all pre-existing or version-currency) |
 | Real device / network | **not executed** — no device available, emulator offline |
+
+### M3 result
+
+| Item | Result |
+|---|---|
+| `./gradlew testDebugUnitTest` | 95 tests, 0 failures, 0 errors |
+| `./gradlew assembleDebug` | BUILD SUCCESSFUL |
+| `./gradlew lintDebug` | 0 errors, 9 warnings (version-currency, unused strings, KTX hint; no new M3 finding) |
+| Real device / network | **not executed** — no device available, emulator offline |
+| D-06 / D-07 | **not run** — need a device |
+| D-08 (DNS over TCP) | documented as unsupported; not exercised |

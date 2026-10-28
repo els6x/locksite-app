@@ -5,6 +5,46 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added — M3 (filter integration and diagnostics)
+
+- **Blocklist → matcher wiring is exercised, not assumed.** The service takes a snapshot at
+  start and follows `observeAll()` afterwards; `DnsQueryHandler` matches every QNAME against
+  the live rules by label boundary.
+- **`CONFLICT_WITH_OTHER_VPN` is now produced.** Denying consent while another VPN runs, or
+  a failed `establish()` with a VPN transport present, reports a conflict instead of a
+  generic tunnel error. `VpnController.refreshConflictState()` clears a stale conflict once
+  the other VPN is gone.
+- **Diagnostics screen (FR-031).** Real service state, VPN consent, whether another VPN
+  owns the tunnel, the locked-domain count (unknown — never 0 — when the read fails), a
+  self-test result and the last check time. No browsing history is shown.
+- **`DiagnosticsSelfTest`** — pure and in-process: builds a wire query, runs it through the
+  real handler with the live rules, and checks that a locked name is blocked while a
+  reserved `.invalid` probe is forwarded. It opens no socket.
+- **`ProtectionStatusText`** — one exhaustive status → string mapping, unit tested, so the
+  six states cannot drift between screens.
+- 13 new unit tests (95 total).
+
+### Changed
+
+- `versionName` 0.4.0, `versionCode` 4.
+- **`ACCESS_NETWORK_STATE` permission added** for conflict detection. Read-only; documented
+  in `docs/SECURITY.md`.
+- Settings links to the new Diagnostics screen; the shared `InfoCard` moved to
+  `ui/components`.
+
+### Known limitations after M3
+
+- **Blocking is still unverified on a real device or network.** Only build, unit tests and
+  lint are green.
+- DNS over TCP is not implemented: a truncated answer makes the client retry over TCP and
+  that retry gets no answer.
+- DNS-over-TLS/HTTPS, other VPNs, proxies and direct IP access bypass the filter. A web
+  proxy such as CroxyProxy is a concrete example: the phone only resolves the proxy host,
+  so the blocked domain never reaches the filter.
+- The service does not call `startForeground`; survival across reboot and process death is
+  an M4 item.
+- Light theme only; no dark variant.
+
 ### Added — M2 (VPN/DNS technical spike)
 
 - `LockSiteVpnService`: local `VpnService` that establishes a TUN interface and answers

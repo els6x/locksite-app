@@ -6,6 +6,7 @@ object Routes {
     const val ADD_DOMAIN = "add-domain"
     const val LOCKED_LIST = "locked-list"
     const val SETTINGS = "settings"
+    const val DIAGNOSTICS = "diagnostics"
 
     val topLevel = setOf(HOME, LOCKED_LIST, SETTINGS)
 }
