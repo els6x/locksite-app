@@ -6,6 +6,7 @@ import com.locksite.app.data.local.OnboardingStore
 import com.locksite.app.data.repository.RoomBlocklistRepository
 import com.locksite.app.domain.repository.BlocklistRepository
 import com.locksite.app.domain.usecase.AddDomainUseCase
+import com.locksite.app.vpn.VpnController
 
 /**
  * Manual dependency graph. No DI framework: at this size an explicit container is
@@ -24,4 +25,7 @@ class AppContainer(context: Context) {
     val onboardingStore: OnboardingStore by lazy { OnboardingStore(applicationContext) }
 
     val addDomainUseCase: AddDomainUseCase by lazy { AddDomainUseCase(blocklistRepository) }
+
+    /** Owns the live protection state pushed by the VPN service. */
+    val vpnController: VpnController by lazy { VpnController(applicationContext) }
 }

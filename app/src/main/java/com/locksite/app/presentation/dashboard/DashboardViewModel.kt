@@ -2,47 +2,57 @@ package com.locksite.app.presentation.dashboard
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.locksite.app.domain.model.LockedDomain
 import com.locksite.app.domain.model.ProtectionStatus
 import com.locksite.app.domain.repository.BlocklistRepository
+import com.locksite.app.vpn.VpnController
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 
 /**
  * Dashboard state.
  *
- * [status] is NOT_CONFIGURED until the VPN service exists (M2). It is hard-coded here on
- * purpose: showing a stored boolean as "active" would be a lie (PRD FR-023, FR-030).
+ * [status] comes straight from [VpnController], which is pushed by the running service.
+ * There is no stored "protection on" flag anywhere in the app: if the service is not
+ * running, the dashboard cannot say it is.
  */
 class DashboardViewModel(
     repository: BlocklistRepository,
+    vpnController: VpnController,
 ) : ViewModel() {
 
     data class UiState(
         val status: ProtectionStatus = ProtectionStatus.NOT_CONFIGURED,
+        val statusDetail: String? = null,
         val lockedCount: Int = 0,
         val latestHostname: String? = null,
         val loading: Boolean = true,
         val loadError: Boolean = false,
-    )
+    ) {
+        val protectionRunning: Boolean get() = status == ProtectionStatus.ACTIVE
+    }
 
-    val uiState: StateFlow<UiState> = repository.observeAll()
-        .map { domains ->
+    private val domains = repository.observeAll()
+        .map<List<LockedDomain>, Result<List<LockedDomain>>> { list -> Result.success(list) }
+        .catch { error -> emit(Result.failure(error)) }
+
+    val uiState: StateFlow<UiState> =
+        combine(domains, vpnController.status, vpnController.detail) { result, status, detail ->
+            val list = result.getOrNull()
             UiState(
-                status = ProtectionStatus.NOT_CONFIGURED,
-                lockedCount = domains.size,
-                latestHostname = domains.firstOrNull()?.hostname,
+                status = status,
+                statusDetail = detail,
+                lockedCount = list?.size ?: 0,
+                latestHostname = list?.firstOrNull()?.hostname,
                 loading = false,
-                loadError = false,
+                // A read failure is an error state, never "empty and therefore safe".
+                loadError = result.isFailure,
             )
-        }
-        .catch {
-            // A read failure is an error state, never "empty and therefore safe".
-            emit(UiState(loading = false, loadError = true))
-        }
-        .stateIn(
+        }.stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5_000),
             initialValue = UiState(),

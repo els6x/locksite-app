@@ -5,6 +5,53 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added — M2 (VPN/DNS technical spike)
+
+- `LockSiteVpnService`: local `VpnService` that establishes a TUN interface and answers
+  DNS queries. Routes **only** the two virtual DNS addresses (`/32` and `/128`) — no
+  default route, so non-DNS traffic never enters the tunnel and cannot be dropped.
+- `dns/` package, pure Kotlin and unit tested without a device:
+  `IpPackets` (IPv4/IPv6 + UDP parse/build with checksums), `DnsMessages` (header and
+  question parsing, compression pointers accepted backwards only), `DnsResponses`
+  (NXDOMAIN, SERVFAIL, FORMERR, TC), `DnsQueryHandler` (block/forward/reject/drop
+  decision), `UdpDnsForwarder` (protected UDP socket, validates sender, transaction ID
+  and QR bit).
+- Blocked names are answered with **NXDOMAIN**, never a fake address. No SOA is attached,
+  so nothing is negative-cached.
+- Allowed names are relayed to `1.1.1.1` (fallback `1.0.0.1`).
+- `VpnController`: live `StateFlow<ProtectionStatus>` pushed only by the service. No
+  status flag is persisted anywhere.
+- Dashboard: real status, and the yellow primary action becomes **Aktifkan perlindungan**
+  while protection is not running (add-domain drops to a ghost button, keeping one yellow
+  action per screen). System VPN consent is launched from the app shell.
+- `docs/ADR/0002-dns-filtering-approach.md` records the route scope, the hand-written
+  parser, the NXDOMAIN choice, the upstream resolver and the MTU.
+- 54 new unit tests (82 total): packet round-trips, checksum verification, malformed
+  input, matcher integration, and a real loopback UDP exchange.
+
+### Changed
+
+- `versionName` 0.3.0, `versionCode` 3.
+- **`INTERNET` permission added.** It is required to relay allowed DNS queries. This is a
+  deliberate weakening of the M0 invariant and is documented in `docs/SECURITY.md`.
+- MTU is 4096 rather than 1500: the tunnel carries only DNS, and an answer larger than one
+  packet cannot be written back. Oversized answers are returned as TC=1 instead of being
+  dropped.
+- `DashboardViewModel` now combines the blocklist flow with the live service status.
+
+### Known limitations after M2
+
+- **Blocking has not been verified on a real device or network.** Only the build, unit
+  tests and lint are green. See the manual runbook in `docs/TEST_PLAN.md`.
+- DNS over TCP is not implemented: a truncated answer makes the client retry over TCP and
+  that retry gets no answer.
+- DNS-over-TLS/HTTPS, other VPNs, proxies and direct IP access bypass the filter.
+- `CONFLICT_WITH_OTHER_VPN` is defined but never produced.
+- The service does not call `startForeground`; survival across reboot and process death is
+  an M4 item.
+- Light theme only; no dark variant.
+- Lint: 9 warnings, 0 errors.
+
 ### Added — M1 (UI and local blocklist)
 
 - Onboarding explaining the DNS filter, the VPN permission and the limits of the product.
@@ -34,7 +81,6 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Known limitations after M1
 
-- Protection status is hard-coded to "not configured": there is no VPN service yet (M2).
 - Light theme only; no dark variant.
 - Lint: 10 warnings, 0 errors (unused resources, newer dependency versions available).
 
@@ -54,6 +100,6 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Notes
 
-- VPN/DNS filtering is **not** implemented. The placeholder screen states this explicitly.
-- ADR 0002 (DNS filtering approach) is intentionally not written yet; it depends on the
-  M2 technical spike.
+- VPN/DNS filtering was **not** implemented in M0; it arrived in M2.
+- ADR 0002 (DNS filtering approach) was intentionally left open until the M2 spike; it is
+  now written.

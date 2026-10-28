@@ -23,7 +23,13 @@
     <string name="dashboard_greeting">Halo!</string>
     <string name="dashboard_lead">Kendalikan akses impulsif, satu domain setiap kali.</string>
     <string name="dashboard_status_title">Status perlindungan</string>
-    <string name="dashboard_status_note_m1">Filter VPN belum tersedia di versi ini. Aktivasi menyusul pada tahap berikutnya.</string>
+    <string name="dashboard_activate">Aktifkan perlindungan</string>
+    <string name="dashboard_note_idle">Filter DNS belum berjalan. Aktifkan agar domain terkunci benar-benar diblokir.</string>
+    <string name="dashboard_note_permission">Menunggu persetujuan Android untuk membuat VPN lokal.</string>
+    <string name="dashboard_note_active">Filter DNS berjalan di perangkat ini. Hanya lalu lintas DNS yang diambil alih.</string>
+    <string name="dashboard_note_error">Filter tidak berjalan sebagaimana mestinya.</string>
+    <string name="dashboard_note_stopped">Perlindungan dihentikan. Aktifkan lagi untuk melanjutkan.</string>
+    <string name="dashboard_note_conflict">VPN lain sedang aktif. Android hanya mengizinkan satu VPN pada satu waktu.</string>
     <string name="dashboard_locked_count">Domain terkunci</string>
     <string name="dashboard_locked_unit">domain</string>
     <string name="dashboard_add_domain">Tambah domain</string>
@@ -38,6 +44,14 @@
     <string name="status_error">Mengalami gangguan</string>
     <string name="status_stopped">Dihentikan</string>
     <string name="status_conflict">Bentrok dengan VPN lain</string>
+
+    <!-- VPN service -->
+    <string name="vpn_error_tunnel">Tidak bisa membuat antarmuka VPN.</string>
+    <string name="vpn_error_blocklist">Daftar domain tidak terbaca, jadi perlindungan tidak dijalankan.</string>
+    <string name="vpn_error_revoked">Dihentikan dari pengaturan Android.</string>
+    <string name="vpn_error_start">Layanan filter tidak bisa dijalankan. Buka aplikasi lalu coba lagi.</string>
+    <string name="vpn_error_permission">Izin VPN belum diberikan. Ketuk Aktifkan perlindungan untuk mencoba lagi.</string>
+    <string name="vpn_error_tunnel_lost">Koneksi filter terputus. Aktifkan ulang perlindungan.</string>
 
     <!-- Add domain -->
     <string name="add_title">Tambah domain</string>
@@ -83,7 +97,7 @@
     <string name="settings_about_title">Tentang aplikasi</string>
     <string name="settings_version">Versi %1$s</string>
     <string name="settings_privacy_title">Privasi</string>
-    <string name="settings_privacy_body">Semua aturan disimpan di perangkat ini. Tidak ada akun, cloud, atau analytics. Tidak ada riwayat situs yang dicatat.</string>
+    <string name="settings_privacy_body">Semua aturan disimpan di perangkat ini. Tidak ada akun, cloud, atau analytics. Tidak ada riwayat situs yang dicatat. Saat perlindungan aktif, query DNS untuk domain yang tidak dikunci diteruskan ke resolver 1.1.1.1 agar situs lain tetap bisa dibuka.</string>
     <string name="settings_recovery_title">Cara pemulihan</string>
     <string name="settings_recovery_body">Buka Pengaturan Android → Jaringan → VPN → matikan LockSite. Jika masih macet, hentikan paksa aplikasi lewat pengaturan sistem. Langkah ini bukan fitur untuk membuka blokir dari dalam aplikasi.</string>
     <string name="settings_limit_title">Batas perlindungan</string>

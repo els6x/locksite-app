@@ -14,7 +14,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -32,7 +31,6 @@ import com.locksite.app.ui.components.EmptyHint
 import com.locksite.app.ui.components.GhostButton
 import com.locksite.app.ui.components.GreetingHeader
 import com.locksite.app.ui.components.PillButton
-import com.locksite.app.ui.components.PillChip
 import com.locksite.app.ui.components.SoftCard
 import com.locksite.app.ui.theme.LockSiteColors
 import com.locksite.app.ui.theme.LockSiteTheme
@@ -43,6 +41,9 @@ import com.locksite.app.ui.theme.Spacing
 /**
  * Home screen: the status field is the single focal point (Von Restorff), the yellow
  * button is the only primary action, and the status is stated in words — not colour alone.
+ *
+ * When protection is not running, activating it *is* the next action, so it takes the
+ * yellow slot and "add domain" drops to a ghost button. Only one yellow action per screen.
  */
 @Composable
 fun DashboardScreen(
@@ -50,6 +51,7 @@ fun DashboardScreen(
     onAddDomain: () -> Unit,
     onOpenList: () -> Unit,
     onOpenSettings: () -> Unit,
+    onActivateProtection: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -58,6 +60,7 @@ fun DashboardScreen(
         onAddDomain = onAddDomain,
         onOpenList = onOpenList,
         onOpenSettings = onOpenSettings,
+        onActivateProtection = onActivateProtection,
         modifier = modifier,
     )
 }
@@ -68,8 +71,11 @@ private fun DashboardContent(
     onAddDomain: () -> Unit,
     onOpenList: () -> Unit,
     onOpenSettings: () -> Unit,
+    onActivateProtection: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val needsActivation = !state.protectionRunning
+
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -86,7 +92,11 @@ private fun DashboardContent(
             onAction = onOpenSettings,
         )
 
-        StatusCard(status = state.status, loadError = state.loadError)
+        StatusCard(
+            status = state.status,
+            statusDetail = state.statusDetail,
+            loadError = state.loadError,
+        )
 
         Row(horizontalArrangement = Arrangement.spacedBy(Spacing.m)) {
             SoftCard(modifier = Modifier.weight(1f)) {
@@ -127,15 +137,29 @@ private fun DashboardContent(
             }
         }
 
-        PillButton(
-            text = stringResource(R.string.dashboard_add_domain),
-            onClick = onAddDomain,
-        )
+        if (needsActivation) {
+            PillButton(
+                text = stringResource(R.string.dashboard_activate),
+                onClick = onActivateProtection,
+                // While the system dialog or the service is starting, a second tap would
+                // only queue another start request.
+                enabled = state.status != ProtectionStatus.PERMISSION_PENDING,
+            )
+        } else {
+            PillButton(
+                text = stringResource(R.string.dashboard_add_domain),
+                onClick = onAddDomain,
+            )
+        }
 
         Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
             GhostButton(
-                text = stringResource(R.string.dashboard_view_list),
-                onClick = onOpenList,
+                text = if (needsActivation) {
+                    stringResource(R.string.dashboard_add_domain)
+                } else {
+                    stringResource(R.string.dashboard_view_list)
+                },
+                onClick = if (needsActivation) onAddDomain else onOpenList,
             )
         }
 
@@ -149,7 +173,11 @@ private fun DashboardContent(
 }
 
 @Composable
-private fun StatusCard(status: ProtectionStatus, loadError: Boolean) {
+private fun StatusCard(
+    status: ProtectionStatus,
+    statusDetail: String?,
+    loadError: Boolean,
+) {
     SoftCard(
         modifier = Modifier.fillMaxWidth(),
         color = LockSiteColors.Teal,
@@ -167,11 +195,11 @@ private fun StatusCard(status: ProtectionStatus, loadError: Boolean) {
             color = LockSiteColors.TealInk,
         )
         Spacer(Modifier.height(Spacing.m))
-        PillChip(
-            text = stringResource(R.string.dashboard_status_note_m1),
-            containerColor = LockSiteColors.Surface.copy(alpha = 0.65f),
-            contentColor = LockSiteColors.TealInk,
-            icon = Icons.Filled.Lock,
+        // A sentence, not a chip: the note explains the state and can wrap to two lines.
+        Text(
+            text = statusDetail ?: stringResource(statusNote(status)),
+            style = LockSiteTypography.bodyMedium,
+            color = LockSiteColors.TealInk.copy(alpha = 0.8f),
         )
         if (loadError) {
             Spacer(Modifier.height(Spacing.s))
@@ -193,15 +221,49 @@ private fun statusLabel(status: ProtectionStatus): Int = when (status) {
     ProtectionStatus.CONFLICT_WITH_OTHER_VPN -> R.string.status_conflict
 }
 
+private fun statusNote(status: ProtectionStatus): Int = when (status) {
+    ProtectionStatus.NOT_CONFIGURED -> R.string.dashboard_note_idle
+    ProtectionStatus.PERMISSION_PENDING -> R.string.dashboard_note_permission
+    ProtectionStatus.ACTIVE -> R.string.dashboard_note_active
+    ProtectionStatus.ERROR -> R.string.dashboard_note_error
+    ProtectionStatus.STOPPED -> R.string.dashboard_note_stopped
+    ProtectionStatus.CONFLICT_WITH_OTHER_VPN -> R.string.dashboard_note_conflict
+}
+
 @Preview(showBackground = true)
 @Composable
 private fun DashboardPreview() {
     LockSiteTheme {
         DashboardContent(
-            state = DashboardViewModel.UiState(lockedCount = 3, latestHostname = "instagram.com", loading = false),
+            state = DashboardViewModel.UiState(
+                status = ProtectionStatus.ACTIVE,
+                lockedCount = 3,
+                latestHostname = "instagram.com",
+                loading = false,
+            ),
             onAddDomain = {},
             onOpenList = {},
             onOpenSettings = {},
+            onActivateProtection = {},
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun DashboardInactivePreview() {
+    LockSiteTheme {
+        DashboardContent(
+            state = DashboardViewModel.UiState(
+                status = ProtectionStatus.NOT_CONFIGURED,
+                lockedCount = 2,
+                latestHostname = "x.com",
+                loading = false,
+            ),
+            onAddDomain = {},
+            onOpenList = {},
+            onOpenSettings = {},
+            onActivateProtection = {},
         )
     }
 }

@@ -1,6 +1,8 @@
 # Technical Design — LockSite
 
-Status: M0 baseline. No VPN/DNS filtering exists yet.
+Status: M2 complete. The DNS filter is implemented and unit-tested; **real-network
+verification on a physical device has not been performed yet**, so no claim is made that
+blocking works end to end.
 
 ## 1. Toolchain (verified on the development machine)
 
@@ -85,34 +87,85 @@ was letting the domain depend on the data layer.
 is hidden on onboarding and on add-domain, where a single task should not compete with
 navigation.
 
-## 5. Network design (planned, M2)
+## 5. Network design (implemented in M2)
+
+Decision record: `docs/ADR/0002-dns-filtering-approach.md`.
 
 MVP uses a local TUN interface with DNS interception:
 
-1. `VpnService.Builder` creates the TUN device and adds only the DNS server address(es)
-   that the filter answers, plus a route limited to those addresses.
-2. Packets are parsed for IPv4/IPv6 + UDP/TCP DNS only.
-3. Blocked QNAME → synthesised DNS response (documented RCODE; no fake IPs without a
-   written reason).
-4. Allowed QNAME → forwarded to the configured upstream resolver, response validated
-   (transaction ID, header flags, source, length) before returning it.
-5. Anything the filter does not understand must still be forwarded, never dropped.
+1. `VpnService.Builder` creates the TUN device, adds one interface address per family and
+   routes **only** the two virtual DNS addresses (`/32` and `/128`). No default route.
+2. Packets are parsed for IPv4/IPv6 + UDP DNS only. TCP, fragments and extension headers
+   are ignored — they are never dropped, because they are never routed into the tunnel.
+3. Blocked QNAME → local NXDOMAIN reply (no fake IPs, no SOA so nothing is cached).
+4. Allowed QNAME → forwarded to `1.1.1.1` (fallback `1.0.0.1`) over a protected UDP
+   socket, response validated (sender, transaction ID, QR bit) before returning it.
+5. A malformed question gets FORMERR; a query that is already a response is dropped.
 
-**Do not ship** a configuration that captures all traffic before forwarding is proven.
+### Package layout
 
-### Open decisions (blocking M2, see PRD section 19)
+```
+dns/
+├── Bytes.kt            16-bit big-endian helpers
+├── Checksums.kt        one's complement arithmetic (IPv4 header + UDP)
+├── IpPackets.kt        IPv4/IPv6 + UDP parse and build
+├── DnsMessages.kt      header/question parsing, compression pointers
+├── DnsResponses.kt     NXDOMAIN, SERVFAIL, FORMERR, TC
+├── DnsQueryHandler.kt  pure decision: block / forward / reject / drop
+└── UdpDnsForwarder.kt  protected UDP socket, per-query, validated replies
 
-- Upstream resolver and its privacy consequences.
-- Whether IPv6 and DNS-over-TCP are in scope for MVP.
-- Own parser vs audited third-party TUN/DNS library (licence + maintenance review).
-- Physical test device and its Android version.
+vpn/
+├── VpnConfig.kt            addresses, routes, MTU, upstreams
+├── VpnController.kt        live status + consent intent (owned by AppContainer)
+└── LockSiteVpnService.kt   lifecycle, TUN read loop, wiring
+```
+
+### Threading
+
+One blocking read loop on `Dispatchers.IO`. A permit is taken from a `Semaphore(8)`
+**before** each packet is dispatched to its own coroutine, so up to eight lookups run
+concurrently and a slow resolver applies backpressure instead of spawning unbounded
+coroutines. Writes to the tunnel are serialised by a `Mutex`; a failed write and a
+malformed packet are both contained to that packet, so neither can terminate the loop.
+
+If the loop itself ends while the service still believes it is running — EOF, I/O error —
+the service publishes `ERROR` and stops itself rather than leaving the dashboard claiming
+"active" over a dead filter. `onRevoke` suppresses that, because a read failure right
+after the system took the VPN away is expected, not a fault.
+
+### Sizing
+
+MTU is 4096 (not 1500) because the tunnel carries only DNS and an answer that exceeds one
+packet cannot be written back. Answers that still do not fit are returned as TC=1 so the
+client fails fast instead of hanging.
+
+### Deliberately not built yet
+
+- DNS over TCP (the client's retry after TC=1 gets no answer).
+- IPv6 extension header chains, IP fragmentation reassembly, ICMP.
+- `CONFLICT_WITH_OTHER_VPN` detection.
+- Foreground service / restart-after-boot behaviour (M4).
 
 ## 6. Status model
 
-UI status is derived from the real service state, not from a stored flag:
+UI status is derived from the real service state, not from a stored flag.
 
-`NotConfigured → PermissionPending → Starting → Active | Error`, plus `Reconnecting`
-and `Stopped`. Failure to read the blocklist is an **error**, never "empty = safe".
+`VpnController` (in `AppContainer`) holds a `StateFlow<ProtectionStatus>` that only
+`LockSiteVpnService` may push to:
+
+| Transition | Trigger |
+|---|---|
+| `NOT_CONFIGURED → PERMISSION_PENDING` | user taps activate, service requested |
+| `PERMISSION_PENDING → ACTIVE` | `establish()` returned a descriptor and the loop started |
+| `PERMISSION_PENDING → ERROR` | `establish()` failed, or the blocklist could not be read |
+| `ACTIVE → STOPPED` | `onRevoke()` (user or system turned the VPN off) or `onDestroy()` |
+
+Nothing is persisted. If the process dies, the status resets to `NOT_CONFIGURED` — which
+is the truth, because the tunnel died with it. Failure to read the blocklist is an
+**error**, never "empty = safe".
+
+`CONFLICT_WITH_OTHER_VPN` exists in the model but is not produced yet; detection lands in
+M3/M4 together with system-level verification.
 
 ## 7. Build commands
 

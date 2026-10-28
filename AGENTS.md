@@ -25,6 +25,29 @@ Work one milestone at a time (see `PRD.md` section 14). For every milestone:
 6. Review `git diff`, then commit. Never `git reset --hard`, never rewrite history,
    never push without explicit permission.
 
+### The build → audit → fix loop (mandatory, user instruction 2026-10-28)
+
+A milestone is not "done" because it compiles. Every milestone from M2 to the final app
+must be taken through this loop, repeating until a full pass finds nothing:
+
+1. **Build** the milestone: write the code and the tests.
+2. **Audit** it. Read the new code as a reviewer, not as its author. Look specifically
+   for what the compiler cannot catch:
+   - failure paths that kill a long-running loop instead of one iteration;
+   - unbounded buffers, allocations from attacker-controlled lengths, missing bounds;
+   - state that can be reported as "working" when it is not;
+   - resource leaks (file descriptors, sockets, coroutines, listeners);
+   - races between threads or between lifecycle callbacks;
+   - UI states that are reachable but unhandled (empty, error, denied, revoked);
+   - behaviour that silently diverges from an ADR or from `PRD.md`.
+3. **Fix** every finding, one defect at a time.
+4. **Re-check**: run the full build, unit tests and lint again, and re-read the changed
+   area. A fix can introduce its own defect, so the loop restarts from step 2.
+5. **Stop** only when a complete pass produces no findings and the build is green.
+
+Report each pass in the milestone summary: what was found, what was fixed, what was
+verified. Never claim a defect class was audited if it was not.
+
 ## Hard prohibitions
 
 - Do not implement a VPN that captures all traffic, processes only DNS and drops the

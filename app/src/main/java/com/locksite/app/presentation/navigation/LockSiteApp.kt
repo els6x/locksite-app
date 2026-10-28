@@ -1,5 +1,8 @@
 package com.locksite.app.presentation.navigation
 
+import android.app.Activity
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -44,6 +47,26 @@ fun LockSiteApp(container: AppContainer) {
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
     val showBottomBar = currentRoute != null && Routes.topLevel.contains(currentRoute)
+
+    // The VPN consent dialog is a system Activity, so only this composable can launch it.
+    val vpnConsentLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.StartActivityForResult(),
+    ) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            container.vpnController.start()
+        } else {
+            container.vpnController.onPermissionDenied()
+        }
+    }
+
+    fun activateProtection() {
+        val consent = container.vpnController.prepareIntent()
+        if (consent == null) {
+            container.vpnController.start()
+        } else {
+            vpnConsentLauncher.launch(consent)
+        }
+    }
 
     fun navigateToTopLevel(route: String) {
         navController.navigate(route) {
@@ -101,13 +124,14 @@ fun LockSiteApp(container: AppContainer) {
 
             composable(Routes.HOME) {
                 val viewModel: DashboardViewModel = viewModel {
-                    DashboardViewModel(container.blocklistRepository)
+                    DashboardViewModel(container.blocklistRepository, container.vpnController)
                 }
                 DashboardScreen(
                     viewModel = viewModel,
                     onAddDomain = { navController.navigate(Routes.ADD_DOMAIN) },
                     onOpenList = { navigateToTopLevel(Routes.LOCKED_LIST) },
                     onOpenSettings = { navigateToTopLevel(Routes.SETTINGS) },
+                    onActivateProtection = ::activateProtection,
                 )
             }
 

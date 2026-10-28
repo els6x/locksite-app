@@ -2,11 +2,13 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <!--
-        M0 baseline permissions: none.
-        No INTERNET permission is requested: the blocklist stays on-device and the
-        app must not be able to phone home (PRD section 11.1).
-        VpnService + POST_NOTIFICATIONS are added in M2 together with the service.
+        M2 adds exactly two capabilities:
+        - INTERNET: required to relay allowed DNS queries to the upstream resolver.
+          Nothing else in the app opens a socket; there is no telemetry and no backend.
+        - BIND_VPN_SERVICE on the filter service, so only the system can start it.
+        The app still stores the blocklist on-device and never uploads it.
     -->
+    <uses-permission android:name="android.permission.INTERNET" />
 
     <application
         android:name=".LockSiteApplication"
@@ -28,6 +30,19 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!--
+            Local DNS filter. Not exported and guarded by BIND_VPN_SERVICE, which only the
+            system holds, so no other app can start or stop it directly.
+        -->
+        <service
+            android:name=".vpn.LockSiteVpnService"
+            android:exported="false"
+            android:permission="android.permission.BIND_VPN_SERVICE">
+            <intent-filter>
+                <action android:name="android.net.VpnService" />
+            </intent-filter>
+        </service>
     </application>
 
 </manifest>
