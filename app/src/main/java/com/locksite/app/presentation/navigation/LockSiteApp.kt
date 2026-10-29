@@ -3,6 +3,11 @@ package com.locksite.app.presentation.navigation
 import android.app.Activity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -16,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -46,6 +52,8 @@ import com.locksite.app.ui.theme.Spacing
 @Composable
 fun LockSiteApp(container: AppContainer) {
     val navController = rememberNavController()
+    // One source of truth for the display preference, shared by Settings, Home and the list.
+    val maskDomains by container.privacyPreferences.maskDomains.collectAsStateWithLifecycle()
     val startDestination = remember {
         if (container.onboardingStore.isCompleted()) Routes.HOME else Routes.ONBOARDING
     }
@@ -130,6 +138,17 @@ fun LockSiteApp(container: AppContainer) {
             navController = navController,
             startDestination = startDestination,
             modifier = Modifier.padding(innerPadding),
+            // Short fade + a small slide: enough to read as motion, never a decoration.
+            enterTransition = {
+                fadeIn(tween(durationMillis = 180)) +
+                    slideInHorizontally(tween(durationMillis = 180)) { it / 12 }
+            },
+            exitTransition = { fadeOut(tween(durationMillis = 140)) },
+            popEnterTransition = { fadeIn(tween(durationMillis = 180)) },
+            popExitTransition = {
+                fadeOut(tween(durationMillis = 140)) +
+                    slideOutHorizontally(tween(durationMillis = 140)) { it / 12 }
+            },
         ) {
             composable(Routes.ONBOARDING) {
                 OnboardingScreen(
@@ -144,7 +163,11 @@ fun LockSiteApp(container: AppContainer) {
 
             composable(Routes.HOME) {
                 val viewModel: DashboardViewModel = viewModel {
-                    DashboardViewModel(container.blocklistRepository, container.vpnController)
+                    DashboardViewModel(
+                        container.blocklistRepository,
+                        container.vpnController,
+                        container.privacyPreferences.maskDomains,
+                    )
                 }
                 DashboardScreen(
                     viewModel = viewModel,
@@ -172,7 +195,10 @@ fun LockSiteApp(container: AppContainer) {
 
             composable(Routes.LOCKED_LIST) {
                 val viewModel: BlocklistViewModel = viewModel {
-                    BlocklistViewModel(container.blocklistRepository)
+                    BlocklistViewModel(
+                        container.blocklistRepository,
+                        container.privacyPreferences.maskDomains,
+                    )
                 }
                 BlocklistScreen(
                     viewModel = viewModel,
@@ -182,6 +208,8 @@ fun LockSiteApp(container: AppContainer) {
 
             composable(Routes.SETTINGS) {
                 SettingsScreen(
+                    maskDomains = maskDomains,
+                    onToggleMask = container.privacyPreferences::setMaskDomains,
                     onOpenDiagnostics = { navController.navigate(Routes.DIAGNOSTICS) },
                 )
             }

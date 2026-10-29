@@ -1,8 +1,8 @@
 # Test Plan — LockSite
 
-Status: M5. The pure DNS/packet layer, the filter wiring and the underlying-network choice
+Status: M6. The pure DNS/packet layer, the filter wiring and the underlying-network choice
 are covered by JVM unit tests. Everything that requires a real network or a real device is
-still open and is marked as such; the manual beta checklist is `docs/BETA_CHECKLIST.md`.
+still open and is marked as such.
 
 ## 1. Unit tests (JVM, no device)
 
@@ -32,25 +32,29 @@ still open and is marked as such; the manual beta checklist is `docs/BETA_CHECKL
 | U-22 | Every `ProtectionStatus` maps to a distinct label and a distinct note | M3 | pass |
 | U-23 | Foreign-VPN resolution: own tunnel never foreign; unknown transport stays unknown | M3 | pass |
 | U-24 | Underlying-network choice: never a VPN transport, prefers validated, null when none | M4 | pass |
+| U-25 | Locked-name masking hides every letter/digit and keeps the dot structure | M6 | pass |
+| U-26 | Strict Private DNS (`hostname`) is detected; opportunistic/off are not | M6 | pass |
 
 ## 2. DNS tests (device / instrumentation)
 
 | ID | Case | Milestone | Status |
 |---|---|---|---|
-| D-01 | Blocked domain returns the documented denial response | M2 | **not run** |
-| D-02 | Allowed domain still resolves | M2 | **not run** |
-| D-03 | Subdomain blocked according to policy | M2 | **not run** |
-| D-04 | Look-alike domain is not blocked | M2 | **not run** |
+| D-01 | Blocked domain returns the documented denial response | M2 | **pass** — manual, Android 13 |
+| D-02 | Allowed domain still resolves | M2 | **pass** — manual, Android 13 |
+| D-03 | Subdomain blocked according to policy | M2 | **pass** — manual, Android 13 |
+| D-04 | Look-alike domain is not blocked | M2 | **pass** — manual, Android 13 |
 | D-05 | Malformed query does not crash the service | M2 | **not run** |
 | D-06 | Resolver timeout yields SERVFAIL, not a hang | M3 | not run |
 | D-07 | Invalid/spoofed response is rejected | M3 | not run |
 | D-08 | DNS over TCP handled or documented as unsupported | M3 | open (documented unsupported) |
 | D-09 | Network change (Wi-Fi ↔ mobile data) keeps filtering or reports failure | M4 | not run |
 | D-10 | App relying on `NET_CAPABILITY_VALIDATED` (e.g. GitHub Mobile) shows online while VPN active after the `setUnderlyingNetworks` fix | M4 | not run |
-| D-11 | GitHub Mobile stays online while protection is active (compatibility bypass) | M4.1 | **pass** — manual, OPPO CPH2217 / Android 13 |
+| D-11 | GitHub Mobile stays online while protection is active (compatibility bypass) | M4.1 | **pass** — manual, Android 13 |
+| D-12 | Strict Private DNS → app refuses to activate and DNS keeps working | M6 | **pass** — manual, Android 13 |
 
 Use domains you control or a test domain reserved for this purpose. Never use third-party
-sites as block targets.
+sites as block targets. D-01…D-04 were verified with Private DNS set to **Automatic**; strict
+Private DNS makes any DNS-only filter unusable (D-12).
 
 ### Manual runbook for D-01 … D-05 (requires a phone)
 
@@ -142,10 +146,24 @@ as working.
 | `./gradlew testDebugUnitTest` | 103 tests, 0 failures, 0 errors |
 | `./gradlew assembleDebug` | BUILD SUCCESSFUL |
 | `./gradlew lintDebug` | 0 errors, 9 warnings (all pre-existing; no new M5 finding) |
-| Install and launch on a real device | **pass** — OPPO CPH2217, Android 13 (API 33), arm64-v8a |
+| Install and launch on a real device | **pass** — Android 13 (API 33), arm64-v8a |
 | D-11 (GitHub Mobile online with protection active) | **pass** — manual observation on the same device |
-| D-01…D-10, I-01…I-09 (live blocking, reboot, network change, conflict, recovery) | **not run** — manual checklist `docs/BETA_CHECKLIST.md` |
+| D-01…D-10, I-01…I-09 (live blocking, reboot, network change, conflict, recovery) | **not run** |
 | Instrumentation tests | none exist |
 
 The only device result recorded here is the one above. It is a manual observation, not an
 automated instrumentation test, and it does not establish that blocking works end to end.
+
+### M6 result
+
+| Item | Result |
+|---|---|
+| `./gradlew testDebugUnitTest` | 114 tests, 0 failures, 0 errors |
+| `./gradlew assembleDebug` | BUILD SUCCESSFUL |
+| `./gradlew lintDebug` | 0 errors, 9 warnings (pre-existing) |
+| M6 managed-device evaluation | documented in `docs/ADR/0003`; no code added, no device test (needs managed provisioning) |
+| UI polish (card heights, radii, ripple clipping, light motion) | verified by screenshot on the device; not an automated test |
+| Locked-name masking | covered by `DomainMaskerTest` (7 tests); toggle verified on the device by screenshot |
+| Strict Private DNS guard | verified on the device: activation refused, status explained, DNS kept working |
+| D-01…D-04 (live blocking) | **pass** — manual, Android 13: every locked name and a subdomain returned NXDOMAIN; allowed names and a look-alike resolved |
+| D-05…D-10, I-01…I-09 (malformed query, network change, reboot, force-stop, conflict, corrupt DB) | **not run** |

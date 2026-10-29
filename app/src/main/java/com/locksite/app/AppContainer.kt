@@ -3,6 +3,7 @@ package com.locksite.app
 import android.content.Context
 import com.locksite.app.data.local.LockSiteDatabase
 import com.locksite.app.data.local.OnboardingStore
+import com.locksite.app.data.local.PrivacyPreferences
 import com.locksite.app.data.repository.RoomBlocklistRepository
 import com.locksite.app.domain.repository.BlocklistRepository
 import com.locksite.app.domain.usecase.AddDomainUseCase
@@ -23,6 +24,9 @@ class AppContainer(context: Context) {
     }
 
     val onboardingStore: OnboardingStore by lazy { OnboardingStore(applicationContext) }
+
+    /** Display-only privacy preferences (mask locked domain names). */
+    val privacyPreferences: PrivacyPreferences by lazy { PrivacyPreferences(applicationContext) }
 
     val addDomainUseCase: AddDomainUseCase by lazy { AddDomainUseCase(blocklistRepository) }
 

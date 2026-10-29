@@ -918,7 +918,7 @@ utama.
 > Status: M0–M3 selesai. M4 implementasi + dokumentasi selesai. Uji restart, Wi-Fi ↔ seluler
 > dan penghentian proses belum dijalankan, sehingga exit criteria M4 belum sepenuhnya
 > terpenuhi. Perbaikan validasi koneksi (GitHub Mobile) terverifikasi manual pada satu
-> perangkat (OPPO CPH2217, Android 13).
+> perangkat Android 13.
 
 Deliverables: - Uji restart. - Uji Wi-Fi dan seluler. - Uji penghentian
 proses. - Dokumentasi pemulihan. - Review privasi dan logging. - Audit
@@ -933,9 +933,9 @@ pemulihan telah diuji. - Tidak ada klaim anti-bypass absolut.
 
 ## M5 --- Beta pribadi
 
-> Status: implementasi dan dokumen selesai. APK debug 0.6.0 dipasang dan dijalankan pada satu
-> perangkat (OPPO CPH2217, Android 13). Uji pemblokiran end-to-end di jaringan nyata masih
-> terbuka — checklist di `docs/BETA_CHECKLIST.md`, batasan di `docs/KNOWN_LIMITATIONS.md`.
+> Status: implementasi dan dokumen selesai. APK debug dipasang dan dijalankan pada satu
+> perangkat Android 13. Uji pemblokiran end-to-end di jaringan nyata masih terbuka — batasan
+> di `docs/KNOWN_LIMITATIONS.md`.
 
 Deliverables: - APK debug/internal release. - Checklist uji manual. -
 Catatan perangkat dan versi Android. - Daftar known limitations. -
@@ -946,6 +946,11 @@ yang belum ditangani ditulis secara eksplisit. - Pengguna memahami cara
 pemulihan sebelum mengaktifkan perlindungan.
 
 ## M6 --- Opsional: Managed device hardening
+
+> Status: evaluasi selesai (ADR 0003). **Tidak diimplementasikan dan tidak diaktifkan** pada
+> build normal: membatasi uninstall atau perubahan VPN melanggar aturan keras proyek dan
+> memerlukan provisioning yang mem-factory-reset perangkat. Bila suatu saat dibutuhkan, ini
+> harus menjadi deliverable terpisah untuk perangkat terkelola, bukan mode normal pengguna.
 
 Hanya setelah MVP stabil: - Evaluasi Android Device Owner /
 managed-device provisioning. - Tinjau kebijakan Android dan konsekuensi

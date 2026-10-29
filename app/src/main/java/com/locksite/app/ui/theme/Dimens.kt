@@ -28,7 +28,6 @@ object Spacing {
 object Radius {
     val control = 16.dp
     val card = 24.dp
-    val large = 28.dp
     val pill = 100.dp
 }
 

@@ -1,4 +1,4 @@
-# Known limitations — LockSite 0.6.0 (private beta)
+# Known limitations — LockSite 0.7.0 (beta)
 
 This list is deliberately blunt. If a limitation is not here, it does not mean it is solved —
 it may simply not have been examined yet.
@@ -16,6 +16,11 @@ it may simply not have been examined yet.
   - a DNS answer already cached before protection was enabled;
   - apps that ship their own resolver and ignore the system DNS server.
 - **Do not describe LockSite as "unbypassable".** It is a focus aid, not a security boundary.
+- **Strict Private DNS breaks the filter.** If Android's Private DNS is set to a hostname
+  (DNS-over-TLS strict), the resolver will not fall back to plaintext, so every lookup fails —
+  including names that are not blocked. LockSite detects this and **refuses to activate**
+  instead of breaking DNS while claiming to be active. Set Private DNS to Off or Automatic to
+  use the app.
 
 ## 2. DNS over TCP is not implemented
 
@@ -60,13 +65,13 @@ it may simply not have been examined yet.
 
 ## 7. Not tested beyond one device
 
-- Verified on **one** phone: OPPO CPH2217, Android 13 (API 33), arm64-v8a. See
-  `docs/DEVICE_NOTES.md`.
+- Verified on **one** phone running Android 13 (API 33), arm64-v8a.
 - Android 8–12 and 14+ are untested. OEM background-management behaviour is untested.
 - There are **no instrumentation tests**. Unit tests cover the pure DNS/packet/matcher layers
   (103 tests); anything needing a real network or a real VPN is manual.
-- Blocking a domain end to end on a live network is still **not verified** by an automated
-  test. Use `docs/BETA_CHECKLIST.md` sections E and F.
+- Blocking was verified **manually on one device** (D-01…D-04): locked names and a subdomain
+  returned NXDOMAIN while allowed names and a look-alike resolved. There is still no automated
+  instrumentation test for it.
 
 ## 8. Packaging and UI
 
@@ -82,3 +87,14 @@ it may simply not have been examined yet.
 - While protection is active, DNS queries for **allowed** names are forwarded to Cloudflare
   (`1.1.1.1`, fallback `1.0.0.1`). That means the resolver sees those names. Blocked names are
   answered locally and never leave the device.
+
+## 10. Managed-device hardening is not implemented
+
+- LockSite is an ordinary app. It does not use Device Owner / Profile Owner policies, so the
+  device owner can always turn the VPN off, force-stop the app, clear its data, or uninstall
+  it.
+- Restricting uninstall or VPN settings would require managed provisioning (a factory reset
+  plus an EMM/QR flow) and would conflict with the project's rule not to weaken Android's
+  recovery paths. See `docs/ADR/0003-managed-device-mode.md`.
+- If a managed fleet ever needs those controls, it must be a separate deliverable, not this
+  build.

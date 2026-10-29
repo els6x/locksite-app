@@ -18,19 +18,25 @@ import kotlinx.coroutines.flow.stateIn
  */
 class BlocklistViewModel(
     repository: BlocklistRepository,
+    maskDomains: StateFlow<Boolean>,
 ) : ViewModel() {
 
     data class UiState(
         val domains: List<LockedDomain> = emptyList(),
         val query: String = "",
         val totalCount: Int = 0,
+        val maskDomains: Boolean = false,
         val loading: Boolean = true,
         val loadError: Boolean = false,
     )
 
     private val query = MutableStateFlow("")
 
-    val uiState: StateFlow<UiState> = combine(repository.observeAll(), query) { domains, search ->
+    val uiState: StateFlow<UiState> = combine(
+        repository.observeAll(),
+        query,
+        maskDomains,
+    ) { domains, search, mask ->
         val filtered = if (search.isBlank()) {
             domains
         } else {
@@ -40,6 +46,7 @@ class BlocklistViewModel(
             domains = filtered,
             query = search,
             totalCount = domains.size,
+            maskDomains = mask,
             loading = false,
             loadError = false,
         )

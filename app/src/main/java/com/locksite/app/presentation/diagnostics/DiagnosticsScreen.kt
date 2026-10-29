@@ -137,7 +137,7 @@ private fun StatusCard(state: DiagnosticsViewModel.UiState) {
     SoftCard(
         modifier = Modifier.fillMaxWidth(),
         color = LockSiteColors.Teal,
-        shape = RoundedCornerShape(Radius.large),
+        shape = RoundedCornerShape(Radius.card),
     ) {
         Text(
             text = stringResource(R.string.diagnostics_service_title),

@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.locksite.app.R
 import com.locksite.app.domain.model.LockedDomain
+import com.locksite.app.domain.privacy.DomainMasker
 import com.locksite.app.presentation.common.formatLockedDate
 import com.locksite.app.ui.components.FlatTextField
 import com.locksite.app.ui.components.PillButton
@@ -100,7 +101,7 @@ fun BlocklistScreen(
                     verticalArrangement = Arrangement.spacedBy(Spacing.m),
                 ) {
                     items(items = state.domains, key = { it.id }) { domain ->
-                        DomainRow(domain)
+                        DomainRow(domain, masked = state.maskDomains)
                     }
                 }
             }
@@ -112,12 +113,12 @@ fun BlocklistScreen(
 }
 
 @Composable
-private fun DomainRow(domain: LockedDomain) {
+private fun DomainRow(domain: LockedDomain, masked: Boolean) {
     SoftCard(modifier = Modifier.fillMaxWidth()) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = domain.hostname,
+                    text = if (masked) DomainMasker.mask(domain.hostname) else domain.hostname,
                     style = LockSiteTypography.titleMedium,
                     color = LockSiteColors.Ink,
                 )
@@ -194,6 +195,7 @@ private fun BlocklistPreview() {
                     includeSubdomains = true,
                     createdAtEpochMillis = 1_761_600_000_000,
                 ),
+                masked = false,
             )
         }
     }

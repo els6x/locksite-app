@@ -5,18 +5,51 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added — M6 (managed-device evaluation) and UI polish
+
+- **M6 evaluated, not enabled.** `docs/ADR/0003-managed-device-mode.md` records why Device
+  Owner / managed-device hardening is not implemented: it would restrict uninstall and VPN
+  settings (forbidden by the project rules), needs factory-reset provisioning, and cannot be
+  tested here. No `DevicePolicyManager` code or device-admin receiver was added.
+- **UI polish.** The two dashboard stat cards now share one height, the locked-count number is
+  smaller, card radii are unified (16 controls / 24 cards / full pills; `Radius.large`
+  removed), and every clickable clips its ripple to its own shape, so a tap no longer paints a
+  grey rectangle.
+- **Light motion.** Bottom-bar selection fades between colours, screens fade with a small
+  slide, and the locked count animates when it changes. No palette or layout change.
+- **Docs trimmed for publication.** `docs/DEVICE_NOTES.md` (contained an ADB serial) and
+  `docs/BETA_CHECKLIST.md` were removed; all references were updated.
+- **Hide locked domain names.** A Settings switch masks every locked name on the Home and
+  Locked-list screens (`instagram.com` → `•••••••••.•••`). The stored hostname, the filter and
+  search keep using the real name; only the display changes. The preference is local and
+  persists across launches. 7 new unit tests (`DomainMaskerTest`).
+- **MIT licence.** Added `LICENSE` (MIT) and a licence section in the README.
+- **Strict Private DNS guard.** Found on a real device: with Private DNS set to a hostname
+  (`dns.adguard.com`), the filter claimed to be active while every DNS lookup failed, because
+  the resolver refuses to fall back from DNS-over-TLS. The service now reads
+  `private_dns_mode` and refuses to start when it is `hostname`, publishing an explanation
+  instead of breaking the phone's DNS. 4 new unit tests (`PrivateDnsTest`).
+- **Live blocking verified on a device (D-01…D-04).** With Private DNS set to Automatic, every
+  locked name and a subdomain returned NXDOMAIN while `example.com`, `cloudflare.com` and a
+  look-alike resolved. This is the first end-to-end blocking result; reboot, network changes,
+  force-stop, another VPN and a corrupted database remain untested.
+
+### Changed — M6
+
+- `versionName` 0.8.0, `versionCode` 9.
+- History rewritten to remove `docs/DEVICE_NOTES.md` from every commit (it contained a device
+  serial). A pre-rewrite bundle was kept outside the repository.
+
 ### Added — M5 (private beta)
 
 - **Recovery is shown before protection is enabled.** While protection is not running, the
   dashboard displays a *Cara menghentikan perlindungan* card: stop it from Android VPN
   settings or by force-stopping the app, stopping does not delete locked domains, and it does
   not start by itself after a reboot. This closes the M5 exit criterion.
-- **Beta documentation:** `docs/RELEASE_NOTES.md`, `docs/BETA_CHECKLIST.md`,
-  `docs/DEVICE_NOTES.md` and `docs/KNOWN_LIMITATIONS.md`. The device notes record the one
-  phone actually used (OPPO CPH2217, Android 13 / API 33, arm64-v8a), not a placeholder.
+- **Beta documentation:** `docs/RELEASE_NOTES.md` and `docs/KNOWN_LIMITATIONS.md`.
 - No change to the DNS filter, blocklist or tunnel behaviour.
 
-### Changed
+### Changed — M5
 
 - `versionName` 0.6.0, `versionCode` 7.
 - Verified on a real device for the first time: the APK installs and launches, and GitHub

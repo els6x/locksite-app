@@ -1,6 +1,6 @@
 # Security & Privacy — LockSite
 
-Scope: M4. This document describes the intended security posture. The DNS filter is
+Scope: M6. This document describes the intended security posture. The DNS filter is
 implemented, wired to the blocklist and unit-tested, but **has not been verified on a real
 network** — nothing here is a claim that blocking currently works end to end.
 

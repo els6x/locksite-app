@@ -1,11 +1,11 @@
 # Technical Design — LockSite
 
-Status: M5 (private beta). The DNS filter is wired to the blocklist, the status is reported
-from the real service, a diagnostics screen exposes the facts the app can observe, and the
-tunnel declares its underlying network so Android can validate it. The APK has been installed
-and launched on one physical device (OPPO CPH2217, Android 13) and GitHub Mobile reports
-online while protection is active; **real-network blocking of a domain has not been verified
-yet**, so no claim is made that blocking works end to end.
+Status: M6 (MVP feature-complete, beta). The DNS filter is wired to the blocklist, the status
+is reported from the real service, a diagnostics screen exposes the facts the app can observe,
+and the tunnel declares its underlying network so Android can validate it. The APK has been
+installed and launched on one physical Android 13 device and GitHub Mobile reports online while
+protection is active; **real-network blocking of a domain has not been verified yet**, so no
+claim is made that blocking works end to end.
 
 ## 1. Toolchain (verified on the development machine)
 
@@ -32,7 +32,7 @@ yet**, so no claim is made that blocking works end to end.
 
 ## 2. Module boundaries
 
-Single Gradle module (`:app`) for M0–M4. Package boundaries carry the architecture:
+Single Gradle module (`:app`) for M0–M6. Package boundaries carry the architecture:
 
 ```
 com.locksite.app

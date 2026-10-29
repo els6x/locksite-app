@@ -209,7 +209,7 @@ private fun PermanentLockDialog(
         SoftCard(
             modifier = Modifier.fillMaxWidth(),
             color = LockSiteColors.Surface,
-            shape = RoundedCornerShape(Radius.large),
+            shape = RoundedCornerShape(Radius.card),
         ) {
             Text(
                 text = stringResource(R.string.add_confirm_title),

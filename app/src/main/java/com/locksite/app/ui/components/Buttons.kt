@@ -15,6 +15,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
@@ -44,6 +45,8 @@ fun PillButton(
             .fillMaxWidth()
             .defaultMinSize(minHeight = 52.dp)
             .background(containerColor.copy(alpha = alpha), RoundedCornerShape(Radius.pill))
+            // Clip before clickable so the ripple is bounded by the pill, not a grey rectangle.
+            .clip(RoundedCornerShape(Radius.pill))
             .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
             .padding(horizontal = Spacing.xl, vertical = Spacing.l),
         contentAlignment = Alignment.Center,
@@ -67,6 +70,7 @@ fun GhostButton(
         modifier = modifier
             .defaultMinSize(minHeight = MinTouchTarget)
             .background(LockSiteColors.Surface, RoundedCornerShape(Radius.pill))
+            .clip(RoundedCornerShape(Radius.pill))
             .clickable(role = Role.Button, onClick = onClick)
             .padding(horizontal = Spacing.l, vertical = Spacing.m),
         contentAlignment = Alignment.Center,
@@ -121,6 +125,7 @@ fun IconCircle(
         modifier = modifier
             .size(MinTouchTarget)
             .background(containerColor, RoundedCornerShape(Radius.pill))
+            .clip(RoundedCornerShape(Radius.pill))
             .clickable(role = Role.Button, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {

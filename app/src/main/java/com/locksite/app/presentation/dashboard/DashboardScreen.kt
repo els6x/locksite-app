@@ -1,11 +1,15 @@
 package com.locksite.app.presentation.dashboard
 
+import androidx.compose.animation.core.animateIntAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -26,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.locksite.app.R
 import com.locksite.app.domain.model.ProtectionStatus
+import com.locksite.app.domain.privacy.DomainMasker
 import com.locksite.app.presentation.common.ProtectionStatusText
 import com.locksite.app.ui.components.CardGap
 import com.locksite.app.ui.components.EmptyHint
@@ -77,6 +82,16 @@ private fun DashboardContent(
     modifier: Modifier = Modifier,
 ) {
     val needsActivation = !state.protectionRunning
+    // Animates only when the count actually changes; the first frame shows the real value.
+    val animatedCount by animateIntAsState(
+        targetValue = state.lockedCount,
+        animationSpec = tween(durationMillis = 400),
+        label = "lockedCount",
+    )
+    // The stored hostname is never changed; only what is drawn is masked.
+    val latestDisplay = state.latestHostname?.let { hostname ->
+        if (state.maskDomains) DomainMasker.mask(hostname) else hostname
+    }
 
     Column(
         modifier = modifier
@@ -110,8 +125,12 @@ private fun DashboardContent(
             )
         }
 
-        Row(horizontalArrangement = Arrangement.spacedBy(Spacing.m)) {
-            SoftCard(modifier = Modifier.weight(1f)) {
+        Row(
+            // Both stat cards share one height so the row reads as a single band.
+            modifier = Modifier.height(IntrinsicSize.Max),
+            horizontalArrangement = Arrangement.spacedBy(Spacing.m),
+        ) {
+            SoftCard(modifier = Modifier.weight(1f).fillMaxHeight()) {
                 Text(
                     text = stringResource(R.string.dashboard_locked_count),
                     style = LockSiteTypography.bodyMedium,
@@ -120,20 +139,20 @@ private fun DashboardContent(
                 Spacer(Modifier.height(Spacing.s))
                 Row(verticalAlignment = Alignment.Bottom) {
                     Text(
-                        text = state.lockedCount.toString(),
-                        style = LockSiteTypography.displaySmall,
+                        text = animatedCount.toString(),
+                        style = LockSiteTypography.headlineMedium,
                         color = LockSiteColors.Ink,
                     )
                     Text(
                         text = stringResource(R.string.dashboard_locked_unit),
-                        modifier = Modifier.padding(start = Spacing.xs, bottom = 6.dp),
+                        modifier = Modifier.padding(start = Spacing.xs, bottom = 4.dp),
                         style = LockSiteTypography.bodyMedium,
                         color = LockSiteColors.InkMuted,
                     )
                 }
             }
 
-            SoftCard(modifier = Modifier.weight(1f), color = LockSiteColors.Green) {
+            SoftCard(modifier = Modifier.weight(1f).fillMaxHeight(), color = LockSiteColors.Green) {
                 Text(
                     text = stringResource(R.string.dashboard_last_added),
                     style = LockSiteTypography.bodyMedium,
@@ -141,7 +160,7 @@ private fun DashboardContent(
                 )
                 Spacer(Modifier.height(Spacing.s))
                 Text(
-                    text = state.latestHostname ?: "—",
+                    text = latestDisplay ?: "—",
                     style = LockSiteTypography.titleMedium,
                     color = LockSiteColors.GreenInk,
                     maxLines = 2,
@@ -193,7 +212,7 @@ private fun StatusCard(
     SoftCard(
         modifier = Modifier.fillMaxWidth(),
         color = LockSiteColors.Teal,
-        shape = RoundedCornerShape(Radius.large),
+        shape = RoundedCornerShape(Radius.card),
     ) {
         Text(
             text = stringResource(R.string.dashboard_status_title),

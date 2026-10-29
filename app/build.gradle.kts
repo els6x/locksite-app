@@ -14,15 +14,14 @@ android {
         applicationId = "com.locksite.app"
         minSdk = 26
         targetSdk = 37
-        versionCode = 7
-        versionName = "0.6.0"
+        versionCode = 9
+        versionName = "0.8.0"
     }
 
     buildTypes {
         debug {
             // Development builds may carry debug-only tooling (PRD section 6).
             applicationIdSuffix = ".debug"
-            versionNameSuffix = "-debug"
         }
         release {
             isMinifyEnabled = false

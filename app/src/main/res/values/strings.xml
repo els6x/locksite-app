@@ -56,6 +56,7 @@
     <string name="vpn_error_permission">Izin VPN belum diberikan. Ketuk Aktifkan perlindungan untuk mencoba lagi.</string>
     <string name="vpn_error_tunnel_lost">Koneksi filter terputus. Aktifkan ulang perlindungan.</string>
     <string name="vpn_error_conflict">VPN lain sedang aktif, jadi filter ini tidak bisa berjalan.</string>
+    <string name="vpn_error_private_dns">Private DNS (DNS-over-TLS) aktif di HP ini, sehingga filter DNS tidak bisa bekerja. Matikan Private DNS atau ubah ke Otomatis di Pengaturan Android → Jaringan, lalu aktifkan lagi.</string>
 
     <!-- Add domain -->
     <string name="add_title">Tambah domain</string>
@@ -102,6 +103,8 @@
     <string name="settings_version">Versi %1$s</string>
     <string name="settings_privacy_title">Privasi</string>
     <string name="settings_privacy_body">Semua aturan disimpan di perangkat ini. Tidak ada akun, cloud, atau analytics. Tidak ada riwayat situs yang dicatat. Saat perlindungan aktif, query DNS untuk domain yang tidak dikunci diteruskan ke resolver 1.1.1.1 agar situs lain tetap bisa dibuka.</string>
+    <string name="settings_mask_title">Sembunyikan nama domain</string>
+    <string name="settings_mask_body">Sensor nama domain di Beranda dan Daftar, misalnya saat layar terlihat orang lain. Pencarian dan filter tetap memakai nama asli.</string>
     <string name="settings_recovery_title">Cara pemulihan</string>
     <string name="settings_recovery_body">Buka Pengaturan Android → Jaringan → VPN → matikan LockSite. Jika masih macet, hentikan paksa aplikasi lewat pengaturan sistem. Langkah ini bukan fitur untuk membuka blokir dari dalam aplikasi.</string>
     <string name="settings_limit_title">Batas perlindungan</string>

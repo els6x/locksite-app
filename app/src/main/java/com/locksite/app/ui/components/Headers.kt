@@ -17,6 +17,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
@@ -100,6 +101,7 @@ fun DetailHeader(
             modifier = Modifier
                 .size(MinTouchTarget)
                 .background(LockSiteColors.Surface, RoundedCornerShape(Radius.pill))
+                .clip(RoundedCornerShape(Radius.pill))
                 .clickable(role = Role.Button, onClick = onBack),
             contentAlignment = Alignment.Center,
         ) {

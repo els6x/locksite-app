@@ -1,6 +1,6 @@
 # Dependency audit — LockSite
 
-Status: M5. Scope: every direct dependency declared in `gradle/libs.versions.toml` and
+Status: M6. Scope: every direct dependency declared in `gradle/libs.versions.toml` and
 `app/build.gradle.kts`, plus the build plugins. Transitive AndroidX/Compose artefacts are
 resolved by the Compose BOM and are not listed individually.
 
@@ -43,7 +43,7 @@ resolved by the Compose BOM and are not listed individually.
 
 - All runtime dependencies are AndroidX/Compose or JUnit, actively maintained by Google or
   the JUnit team. No abandoned or unmaintained dependency is present.
-- Versions were current at the time of the M4 audit (2026-10-29). `lint` reports
+- Versions were current at the time of the M6 audit (2026-10-29). `lint` reports
   "newer version available" warnings for some AndroidX artefacts; those are informational
   and are not pinned by this project's own policy.
 - No dependency is added without a recorded reason. A future addition must document licence,

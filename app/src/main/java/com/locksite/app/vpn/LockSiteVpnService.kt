@@ -8,6 +8,7 @@ import android.net.NetworkCapabilities
 import android.net.NetworkRequest
 import android.net.VpnService
 import android.os.ParcelFileDescriptor
+import android.provider.Settings
 import com.locksite.app.LockSiteApplication
 import com.locksite.app.MainActivity
 import com.locksite.app.R
@@ -139,6 +140,19 @@ class LockSiteVpnService : VpnService() {
         }
         rules.set(snapshot)
         rulesHealthy = true
+
+        // A strict Private DNS hostname means the resolver will only speak DNS-over-TLS.
+        // This tunnel answers plaintext DNS, so every lookup would fail — including names
+        // that are not blocked. Refuse to start instead of breaking the phone's DNS while
+        // the UI says "active".
+        if (PrivateDns.isStrict(privateDnsMode())) {
+            controller.publish(
+                ProtectionStatus.ERROR,
+                getString(R.string.vpn_error_private_dns),
+            )
+            stopSelf()
+            return
+        }
 
         val descriptor = try {
             buildTunnel().establish()
@@ -411,6 +425,12 @@ class LockSiteVpnService : VpnService() {
 
     private fun isOurDnsAddress(address: ByteArray): Boolean =
         ourDnsAddresses.any { it.contentEquals(address) }
+
+    /** Strict Private DNS mode, or `null` when the setting cannot be read. */
+    private fun privateDnsMode(): String? = runCatching {
+        // Same key as Settings.Global.PRIVATE_DNS_MODE, which is not exposed in every SDK.
+        Settings.Global.getString(contentResolver, "private_dns_mode")
+    }.getOrNull()
 
     private fun currentStatus(): ProtectionStatus = when {
         tunnel == null -> ProtectionStatus.NOT_CONFIGURED

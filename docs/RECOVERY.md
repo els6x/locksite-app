@@ -1,6 +1,6 @@
 # Recovery — LockSite
 
-Status: M5. This document describes how a user gets out of every state the app can put the
+Status: M6. This document describes how a user gets out of every state the app can put the
 device in. It is the user-facing counterpart to `docs/SECURITY.md` §4.
 
 The app must never make these paths harder to reach. They are Android system controls, not
@@ -57,3 +57,8 @@ This is the symptom of a tunnel problem, not of a blocked domain. Follow §1 (tu
 off). If normal browsing returns, the filter was the cause; re-activate it and check
 **Settings → Diagnostik**. If browsing does not return with the VPN off, the problem is the
 underlying connection, not LockSite.
+
+**If every site fails while protection is on**, check Android's **Private DNS** setting. A
+strict Private DNS hostname (DNS-over-TLS) cannot work with a DNS-only filter, because the
+resolver never falls back to plaintext. LockSite refuses to activate in that state and tells
+you why; set Private DNS to **Off** or **Automatic**, then activate again.

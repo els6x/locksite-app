@@ -15,9 +15,10 @@ TYPE      : 12 13 15 20 28 40 · line-height 1.5 body / 1.4 title / 1.2 display
 COLOUR    : canvas #F2F2F2 · surface #FFFFFF · muted #F6F6F7 · outline #E8E8EA
             teal #BFE7E8 (status field) · green #CDE9AB (completed) · yellow #F8EC94 (one primary action)
             ink #17181A · muted ink #5F6066 · faint #8E8F95
-RADIUS    : 16 controls · 24 cards · 28 large cards · full pills
+RADIUS    : 16 controls · 24 cards · full pills
 ELEVATION : none, everywhere. Grouping comes from colour fields and gaps, never shadows.
-MOTION    : 120 / 200 ms, ease-out in, ease-in out. No decorative animation in M1.
+MOTION    : 140–400 ms, ease-out in, ease-in out. Light transitions only: bottom-bar colour,
+            screen fade/slide, animated count. No decorative animation.
 ```
 
 ## 2. Why these numbers
@@ -63,23 +64,24 @@ Each screen has exactly one primary action:
 | Screen | Primary action | Focal element |
 |---|---|---|
 | Onboarding | "Mulai atur" | Headline |
-| Dashboard | "Tambah domain" | Teal status card |
+| Dashboard | "Aktifkan perlindungan" (inactive) / "Tambah domain" (active) | Teal status card |
 | Add domain | "Kunci domain" | Input field |
 | Locked list | "Tambah domain" | The list itself |
 | Settings | none | The information cards |
 
 ## 6. States implemented
 
-default · pressed (Compose ripple-free clickable) · disabled (45% alpha) · loading
+default · pressed (ripple clipped to the component shape) · disabled (45% alpha) · loading
 (`saving` flag disables the primary button) · empty (per screen) · error (validation text,
 load-error card) · success (green confirmation card). Focus-visible is provided by the
 system IME for text fields.
 
-## 7. Known limitations (M1)
+## 7. Known limitations
 
 - **No dark theme.** The palette is a light pastel system; a dark variant needs its own
   contrast pass and is not invented here.
-- No motion beyond platform defaults — deliberate for M1.
+- Motion is limited to short colour, fade, slide and count transitions. There is no decorative
+  or looping animation.
 - Launcher icon is a placeholder shape, not a finished brand mark.
 - Contrast was checked by eye against the tokens above; it has not yet been measured with
-  a tool. Tracked for the accessibility pass before beta (M5).
+  a tool. Tracked for a future accessibility pass.

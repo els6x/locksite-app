@@ -102,8 +102,12 @@ than silence, so it fails fast instead of hanging.
 - DNS over TCP is not implemented. A response too large for UDP is truncated; the client's
   TCP retry gets no answer. Remains a documented limitation after M3 (D-08).
 - DNS-over-TLS / DNS-over-HTTPS configured by the user or an app bypasses the filter.
-- Private DNS set to "Automatic" on the device may attempt DoT to the virtual resolver.
-  It fails and falls back to plaintext, but it is worth checking on the test device.
+- **Private DNS set to a hostname (strict DoT) cannot work with this filter.** The resolver
+  refuses to fall back to plaintext, so every lookup fails. Found on a real device (Android 13,
+  Private DNS `dns.adguard.com`): with the tunnel up, allowed names failed too. The service now
+  reads `private_dns_mode` and refuses to start when it is `hostname`, publishing an error
+  instead of breaking DNS. "Automatic" (opportunistic) still falls back and is acceptable. The
+  app cannot change the setting; the user must set it to Off or Automatic.
 - Direct IP access is not filtered (no DNS query is involved).
 - The service does not call `startForeground`. The system VPN notification keeps the
   process alive; M4 keeps this deliberately and documents the consequence: if the process
@@ -117,7 +121,7 @@ than silence, so it fails fast instead of hanging.
 - **Apps that gate on Android's connectivity validation (`NET_CAPABILITY_VALIDATED`) can
   report "offline" while the VPN is active even though internet works.** Android validates
   the VPN network, which has no internet route, so the probe fails and the capability is
-  absent. A concrete trigger is GitHub Mobile. **Addressed in M4 (unverified on a device):**
+  absent. A concrete trigger is GitHub Mobile. **Addressed in M4:**
   the builder calls
   `setUnderlyingNetworks(arrayOf(physicalNetwork))` and a `NetworkCallback` refreshes it on
   connection changes, so the VPN inherits the underlying network's validated state
@@ -131,6 +135,7 @@ than silence, so it fails fast instead of hanging.
   physical network and its DNS is therefore not filtered. This is a compatibility measure,
   not a filter bypass: a domain blocked for other apps is still blocked in the browser.
 
-**Verified through M4:** build, unit tests, lint (0 errors). **Not verified:** real network
-behaviour on a physical device, including the connectivity fix. No claim of working blocking
-is made until that test is run.
+**Verified through M6:** build, unit tests and lint (0 errors); install, launch and rendering on
+one Android 13 device; and the compatibility bypass (GitHub Mobile reports online while
+protection is active). **Not verified:** live blocking on a real network, reboot, and network
+changes. No claim of working blocking is made until those tests are run.

@@ -1,5 +1,7 @@
 package com.locksite.app.ui.components
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -15,8 +17,10 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -52,14 +56,26 @@ fun LockSiteBottomBar(
     ) {
         BottomDestination.entries.forEach { destination ->
             val selected = destination == current
-            val tint = if (selected) LockSiteColors.YellowInk else LockSiteColors.InkMuted
+            // A short colour transition keeps the selected pill from snapping.
+            val pillColor by animateColorAsState(
+                targetValue = if (selected) LockSiteColors.Yellow else LockSiteColors.Surface,
+                animationSpec = tween(durationMillis = 180),
+                label = "bottomBarPill",
+            )
+            val tint by animateColorAsState(
+                targetValue = if (selected) LockSiteColors.YellowInk else LockSiteColors.InkMuted,
+                animationSpec = tween(durationMillis = 180),
+                label = "bottomBarTint",
+            )
             Box(
                 modifier = Modifier
                     .size(44.dp)
                     .background(
-                        color = if (selected) LockSiteColors.Yellow else LockSiteColors.Surface,
+                        color = pillColor,
                         shape = RoundedCornerShape(Radius.pill),
                     )
+                    // Keep the ripple inside the round target.
+                    .clip(RoundedCornerShape(Radius.pill))
                     .clickable(role = Role.Tab, onClick = { onSelect(destination) })
                     .semantics { contentDescription = destination.label },
                 contentAlignment = Alignment.Center,

@@ -23,6 +23,7 @@ import kotlinx.coroutines.flow.stateIn
 class DashboardViewModel(
     repository: BlocklistRepository,
     vpnController: VpnController,
+    maskDomains: StateFlow<Boolean>,
 ) : ViewModel() {
 
     data class UiState(
@@ -30,6 +31,7 @@ class DashboardViewModel(
         val statusDetail: String? = null,
         val lockedCount: Int = 0,
         val latestHostname: String? = null,
+        val maskDomains: Boolean = false,
         val loading: Boolean = true,
         val loadError: Boolean = false,
     ) {
@@ -41,13 +43,19 @@ class DashboardViewModel(
         .catch { error -> emit(Result.failure(error)) }
 
     val uiState: StateFlow<UiState> =
-        combine(domains, vpnController.status, vpnController.detail) { result, status, detail ->
+        combine(
+            domains,
+            vpnController.status,
+            vpnController.detail,
+            maskDomains,
+        ) { result, status, detail, mask ->
             val list = result.getOrNull()
             UiState(
                 status = status,
                 statusDetail = detail,
                 lockedCount = list?.size ?: 0,
                 latestHostname = list?.firstOrNull()?.hostname,
+                maskDomains = mask,
                 loading = false,
                 // A read failure is an error state, never "empty and therefore safe".
                 loadError = result.isFailure,
