@@ -1,6 +1,6 @@
 # Dependency audit — LockSite
 
-Status: M4. Scope: every direct dependency declared in `gradle/libs.versions.toml` and
+Status: M5. Scope: every direct dependency declared in `gradle/libs.versions.toml` and
 `app/build.gradle.kts`, plus the build plugins. Transitive AndroidX/Compose artefacts are
 resolved by the Compose BOM and are not listed individually.
 

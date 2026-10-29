@@ -31,6 +31,7 @@ import com.locksite.app.ui.components.CardGap
 import com.locksite.app.ui.components.EmptyHint
 import com.locksite.app.ui.components.GhostButton
 import com.locksite.app.ui.components.GreetingHeader
+import com.locksite.app.ui.components.InfoCard
 import com.locksite.app.ui.components.PillButton
 import com.locksite.app.ui.components.SoftCard
 import com.locksite.app.ui.theme.LockSiteColors
@@ -98,6 +99,16 @@ private fun DashboardContent(
             statusDetail = state.statusDetail,
             loadError = state.loadError,
         )
+
+        // M5 exit criterion: the user must know how to stop protection *before* enabling it.
+        // Shown only while protection is not running, so it never competes with the
+        // "Perlindungan aktif" state for attention.
+        if (needsActivation) {
+            InfoCard(
+                title = stringResource(R.string.dashboard_recovery_title),
+                body = stringResource(R.string.dashboard_recovery_body),
+            )
+        }
 
         Row(horizontalArrangement = Arrangement.spacedBy(Spacing.m)) {
             SoftCard(modifier = Modifier.weight(1f)) {

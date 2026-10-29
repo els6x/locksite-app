@@ -1,8 +1,8 @@
 # Test Plan — LockSite
 
-Status: M4. The pure DNS/packet layer, the filter wiring and the underlying-network choice
+Status: M5. The pure DNS/packet layer, the filter wiring and the underlying-network choice
 are covered by JVM unit tests. Everything that requires a real network or a real device is
-still open and is marked as such.
+still open and is marked as such; the manual beta checklist is `docs/BETA_CHECKLIST.md`.
 
 ## 1. Unit tests (JVM, no device)
 
@@ -47,23 +47,30 @@ still open and is marked as such.
 | D-08 | DNS over TCP handled or documented as unsupported | M3 | open (documented unsupported) |
 | D-09 | Network change (Wi-Fi ↔ mobile data) keeps filtering or reports failure | M4 | not run |
 | D-10 | App relying on `NET_CAPABILITY_VALIDATED` (e.g. GitHub Mobile) shows online while VPN active after the `setUnderlyingNetworks` fix | M4 | not run |
-| D-11 | GitHub Mobile stays online while protection is active (compatibility bypass) | M4.1 | not run |
+| D-11 | GitHub Mobile stays online while protection is active (compatibility bypass) | M4.1 | **pass** — manual, OPPO CPH2217 / Android 13 |
 
 Use domains you control or a test domain reserved for this purpose. Never use third-party
 sites as block targets.
 
 ### Manual runbook for D-01 … D-05 (requires a phone)
 
-1. Install the debug APK, open the app, add a domain you control (for example
-   `blocked.example.com`).
-2. Tap **Aktifkan perlindungan**, accept the system VPN dialog. The dashboard must show
+`nslookup` is **not** present in the Android shell (verified on Android 13 / API 33). Use
+`ping`, which goes through the system resolver: a name that cannot be resolved prints
+`ping: unknown host <name>`, a name that resolves prints `PING <name> (<ip>)`.
+
+1. Pick a domain **you control that resolves normally**. This matters: a made-up name such as
+   `blocked.example.com` prints `unknown host` even with the filter off, so it proves nothing.
+2. With protection **off**, `adb shell ping -c 1 -W 2 <domain>` must print `PING <domain> (<ip>)`.
+   If it does not, the domain is not a valid test target — choose another.
+3. Install the debug APK, open the app, add that domain.
+4. Tap **Aktifkan perlindungan**, accept the system VPN dialog. The dashboard must show
    **Perlindungan aktif** and the Android VPN key icon must appear.
-3. `adb shell nslookup blocked.example.com` → must return NXDOMAIN.
-4. `adb shell nslookup example.com` → must return a real address.
-5. `adb shell nslookup www.blocked.example.com` → NXDOMAIN (subdomain policy).
-6. `adb shell nslookup notblocked.example.com` → resolves.
-7. Open a browser and load a normal site → must still work (no route was widened).
-8. Turn the VPN off in Android settings → dashboard must show **Dihentikan**.
+5. `adb shell ping -c 1 -W 2 <domain>` → must now print `ping: unknown host <domain>`.
+6. `adb shell ping -c 1 -W 2 www.<domain>` → `ping: unknown host` (subdomain policy).
+7. `adb shell ping -c 1 -W 2 example.com` → must print `PING example.com (<ip>)` (allowed name
+   still resolves).
+8. Open a browser and load a normal site → must still work (no route was widened).
+9. Turn the VPN off in Android settings → dashboard must show **Dihentikan**.
 
 ## 3. Android integration tests
 
@@ -127,3 +134,18 @@ as working.
 | Real device / network | **not executed** — no device available, emulator offline |
 | D-09 / D-10 (network change, connectivity validation) | **not run** — need a device |
 | I-05…I-09 (reboot, conflict, force-stop, corrupt DB, recovery) | **not run** — need a device |
+
+### M5 result
+
+| Item | Result |
+|---|---|
+| `./gradlew testDebugUnitTest` | 103 tests, 0 failures, 0 errors |
+| `./gradlew assembleDebug` | BUILD SUCCESSFUL |
+| `./gradlew lintDebug` | 0 errors, 9 warnings (all pre-existing; no new M5 finding) |
+| Install and launch on a real device | **pass** — OPPO CPH2217, Android 13 (API 33), arm64-v8a |
+| D-11 (GitHub Mobile online with protection active) | **pass** — manual observation on the same device |
+| D-01…D-10, I-01…I-09 (live blocking, reboot, network change, conflict, recovery) | **not run** — manual checklist `docs/BETA_CHECKLIST.md` |
+| Instrumentation tests | none exist |
+
+The only device result recorded here is the one above. It is a manual observation, not an
+automated instrumentation test, and it does not establish that blocking works end to end.

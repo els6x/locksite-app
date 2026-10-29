@@ -915,8 +915,10 @@ utama.
 
 ## M4 --- Ketahanan dan pemulihan
 
-> Status: M0–M3 selesai. M4 implementasi + dokumentasi dikerjakan; uji perangkat belum
-> dijalankan sehingga exit criteria M4 belum terpenuhi.
+> Status: M0–M3 selesai. M4 implementasi + dokumentasi selesai. Uji restart, Wi-Fi ↔ seluler
+> dan penghentian proses belum dijalankan, sehingga exit criteria M4 belum sepenuhnya
+> terpenuhi. Perbaikan validasi koneksi (GitHub Mobile) terverifikasi manual pada satu
+> perangkat (OPPO CPH2217, Android 13).
 
 Deliverables: - Uji restart. - Uji Wi-Fi dan seluler. - Uji penghentian
 proses. - Dokumentasi pemulihan. - Review privasi dan logging. - Audit
@@ -930,6 +932,10 @@ Exit criteria: - Perilaku setelah restart terdokumentasi. - Prosedur
 pemulihan telah diuji. - Tidak ada klaim anti-bypass absolut.
 
 ## M5 --- Beta pribadi
+
+> Status: implementasi dan dokumen selesai. APK debug 0.6.0 dipasang dan dijalankan pada satu
+> perangkat (OPPO CPH2217, Android 13). Uji pemblokiran end-to-end di jaringan nyata masih
+> terbuka — checklist di `docs/BETA_CHECKLIST.md`, batasan di `docs/KNOWN_LIMITATIONS.md`.
 
 Deliverables: - APK debug/internal release. - Checklist uji manual. -
 Catatan perangkat dan versi Android. - Daftar known limitations. -

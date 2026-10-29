@@ -36,6 +36,8 @@
     <string name="dashboard_view_list">Lihat daftar</string>
     <string name="dashboard_empty_hint">Belum ada domain terkunci. Mulai dari satu domain yang paling sering mengganggu.</string>
     <string name="dashboard_last_added">Terakhir dikunci</string>
+    <string name="dashboard_recovery_title">Cara menghentikan perlindungan</string>
+    <string name="dashboard_recovery_body">Matikan lewat Pengaturan Android → Jaringan → VPN → LockSite, atau hentikan paksa aplikasi. Mematikan perlindungan tidak menghapus domain terkunci, dan setelah HP restart perlindungan tidak menyala sendiri.</string>
 
     <!-- Protection status -->
     <string name="status_not_configured">Belum aktif</string>

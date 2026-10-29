@@ -5,6 +5,33 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added — M5 (private beta)
+
+- **Recovery is shown before protection is enabled.** While protection is not running, the
+  dashboard displays a *Cara menghentikan perlindungan* card: stop it from Android VPN
+  settings or by force-stopping the app, stopping does not delete locked domains, and it does
+  not start by itself after a reboot. This closes the M5 exit criterion.
+- **Beta documentation:** `docs/RELEASE_NOTES.md`, `docs/BETA_CHECKLIST.md`,
+  `docs/DEVICE_NOTES.md` and `docs/KNOWN_LIMITATIONS.md`. The device notes record the one
+  phone actually used (OPPO CPH2217, Android 13 / API 33, arm64-v8a), not a placeholder.
+- No change to the DNS filter, blocklist or tunnel behaviour.
+
+### Changed
+
+- `versionName` 0.6.0, `versionCode` 7.
+- Verified on a real device for the first time: the APK installs and launches, and GitHub
+  Mobile reports **online** while protection is active (compatibility bypass). Blocking end to
+  end on a live network is still **not verified** — see `docs/TEST_PLAN.md`.
+
+### Known limitations after M5
+
+- Blocking a domain on a live network, reboot, Wi-Fi ↔ cellular, force-stop, another VPN and a
+  corrupted database remain untested (D-01…D-10, I-01…I-09).
+- The beta APK is debug-signed and internal-only.
+- DNS over TCP is not implemented; DoH/DoT, other VPNs, proxies and direct IP access bypass
+  the filter; compatibility-bypassed apps are not filtered.
+- The bypass package list is hardcoded, not user-configurable.
+
 ### Fixed — M4.1 (compatibility bypass)
 
 - **Apps that report "offline" while protection is active.** Android validates a VPN network

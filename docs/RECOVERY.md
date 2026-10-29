@@ -1,6 +1,6 @@
 # Recovery — LockSite
 
-Status: M4. This document describes how a user gets out of every state the app can put the
+Status: M5. This document describes how a user gets out of every state the app can put the
 device in. It is the user-facing counterpart to `docs/SECURITY.md` §4.
 
 The app must never make these paths harder to reach. They are Android system controls, not
