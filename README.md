@@ -1,6 +1,6 @@
 # LockSite
 
-Aplikasi Android untuk memblokir domain pilihan sendiri secara **permanen dari sisi UI** —
+Aplikasi open source Android untuk memblokir domain pilihan sendiri secara **permanen dari sisi UI** —
 tanpa tombol hapus atau unblock untuk domain yang sudah dikunci.
 
 Blokir dilakukan dengan **filter DNS lokal** melalui `VpnService`. Semua aturan disimpan
