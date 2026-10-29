@@ -49,6 +49,20 @@ object VpnConfig {
 
     const val UPSTREAM_TIMEOUT_MS = 3000
 
+    /**
+     * Apps excluded from the tunnel because a DNS-only VPN makes them report "offline".
+     *
+     * Android validates a VPN network by probing it. This tunnel has no internet route, so
+     * the probe fails and `NET_CAPABILITY_VALIDATED` is absent. Apps that gate on it — GitHub
+     * Mobile is the known case — show "offline" even though the underlying internet works.
+     * `setUnderlyingNetworks` does not change that probe on every device, so these packages
+     * are excluded entirely and use the physical network instead.
+     *
+     * Consequence: their DNS is not filtered. That is acceptable because they are not block
+     * targets; a domain blocked in the browser is still blocked for every other app.
+     */
+    val COMPATIBILITY_BYPASS_PACKAGES = listOf("com.github.android")
+
     /** Bounds how many lookups can be in flight before the read loop applies backpressure. */
     const val MAX_CONCURRENT_QUERIES = 8
 }

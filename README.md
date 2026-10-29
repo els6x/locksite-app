@@ -7,9 +7,11 @@ Blokir dilakukan dengan **filter DNS lokal** melalui `VpnService`. Semua aturan 
 di perangkat: tidak ada akun, tidak ada cloud, tidak ada analytics, tidak ada riwayat
 browsing yang dikirim ke mana pun.
 
-> **Status: M1 (UI + blocklist lokal).** Onboarding, dashboard, tambah domain, daftar domain
-> terkunci, dan penyimpanan lokal sudah ada. Filter VPN/DNS **belum ada**, jadi status
-> perlindungan masih ditampilkan "Belum aktif" secara jujur — belum ada klaim pemblokiran.
+> **Status: M4 (ketahanan dan pemulihan).** Filter DNS sudah terhubung ke daftar domain,
+> status berasal dari layanan nyata, layar Diagnostik tersedia, dan sejak M4 tunnel
+> mendeklarasikan jaringan fisik di bawahnya (`setUnderlyingNetworks`) supaya aplikasi lain
+> tidak salah melaporkan "offline" saat perlindungan aktif. **Uji pada perangkat fisik belum
+> dijalankan**, jadi belum ada klaim bahwa pemblokiran bekerja menyeluruh.
 
 ## Batasan yang perlu dipahami
 
@@ -18,6 +20,12 @@ browsing yang dikirim ke mana pun.
 - DNS filtering tidak menangkap semua jalur: DNS-over-HTTPS/DoT, proxy, VPN lain, cache
   DNS, dan akses langsung via IP dapat menembusnya.
 - Aplikasi ini **tidak** menjamin blokir 100% tidak bisa dilewati.
+- Setelah perangkat restart atau proses aplikasi dihentikan paksa, perlindungan tidak
+  menyala sendiri; status akan jujur menunjukkan "Belum aktif" sampai diaktifkan lagi.
+  Lihat `docs/RECOVERY.md`.
+- Aplikasi yang menolak VPN DNS-only (mis. GitHub Mobile) dikecualikan dari tunnel agar tetap
+  online; DNS aplikasi itu tidak ikut disaring. Domain yang diblokir tetap diblokir di
+  aplikasi lain dan browser.
 
 ## Persyaratan
 
@@ -30,6 +38,7 @@ browsing yang dikirim ke mana pun.
 ```bash
 ./gradlew assembleDebug        # APK debug
 ./gradlew testDebugUnitTest    # unit test
+./gradlew lintDebug            # Android lint
 ./gradlew installDebug         # pasang ke perangkat yang terhubung
 ```
 
@@ -41,13 +50,19 @@ browsing yang dikirim ke mana pun.
 |---|---|
 | `PRD.md` | Spesifikasi produk (sumber kebenaran) |
 | `AGENTS.md` | Aturan kerja untuk AI coding agent |
-| `docs/TECHNICAL_DESIGN.md` | Toolchain, batas modul, rencana jaringan |
+| `docs/TECHNICAL_DESIGN.md` | Toolchain, batas modul, desain jaringan, status |
 | `docs/SECURITY.md` | Model ancaman, privasi, aturan logging |
-| `docs/TEST_PLAN.md` | Rencana unit / instrumentasi / acceptance test |
+| `docs/TEST_PLAN.md` | Rencana unit / perangkat / acceptance test |
+| `docs/RECOVERY.md` | Prosedur pemulihan (restart, force-stop, uninstall) |
+| `docs/DEPENDENCIES.md` | Audit dependency: versi, lisensi, status |
 | `docs/ADR/` | Keputusan arsitektur |
 | `app/` | Modul aplikasi Android |
 
 ## Milestone
 
-M0 fondasi → M1 UI + blocklist → M2 spike VPN/DNS → M3 integrasi filter → M4 ketahanan →
-M5 beta pribadi. Detail di `PRD.md` bagian 14.
+M0 fondasi → M1 UI + blocklist → M2 spike VPN/DNS → M3 integrasi filter →
+**M4 ketahanan + pemulihan** → M5 beta pribadi. Detail di `PRD.md` bagian 14.
+
+M0–M3 selesai. M4 selesai pada sisi implementasi dan dokumentasi; uji perangkat
+(restart, Wi-Fi ↔ seluler, penghentian proses, validasi koneksi) belum dijalankan karena
+belum ada perangkat fisik yang terhubung.

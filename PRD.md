@@ -915,9 +915,16 @@ utama.
 
 ## M4 --- Ketahanan dan pemulihan
 
+> Status: M0–M3 selesai. M4 implementasi + dokumentasi dikerjakan; uji perangkat belum
+> dijalankan sehingga exit criteria M4 belum terpenuhi.
+
 Deliverables: - Uji restart. - Uji Wi-Fi dan seluler. - Uji penghentian
 proses. - Dokumentasi pemulihan. - Review privasi dan logging. - Audit
-dependency.
+dependency. - **Perbaikan validasi koneksi:** `VpnService.Builder
+.setUnderlyingNetworks()` agar aplikasi lain (mis. GitHub Mobile) tidak
+melaporkan "offline" saat VPN aktif — lihat ADR 0002. Tanpa ini, VPN DNS-only
+membuat Android gagal memvalidasi jaringan, sehingga app pelacak koneksi salah
+melaporkan offline padahal internet aman.
 
 Exit criteria: - Perilaku setelah restart terdokumentasi. - Prosedur
 pemulihan telah diuji. - Tidak ada klaim anti-bypass absolut.

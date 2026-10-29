@@ -2,6 +2,10 @@ package com.locksite.app.vpn
 
 import android.app.PendingIntent
 import android.content.Intent
+import android.net.ConnectivityManager
+import android.net.Network
+import android.net.NetworkCapabilities
+import android.net.NetworkRequest
 import android.net.VpnService
 import android.os.ParcelFileDescriptor
 import com.locksite.app.LockSiteApplication
@@ -69,6 +73,19 @@ class LockSiteVpnService : VpnService() {
     private var startJob: Job? = null
     private var readJob: Job? = null
     private var rulesJob: Job? = null
+
+    /** The physical network the tunnel sits on; `null` means "platform default". */
+    @Volatile
+    private var underlyingNetwork: Network? = null
+
+    /** Guards [networkCallback] and [destroyed] against the register/destroy race. */
+    private val callbackLock = Any()
+
+    @Volatile
+    private var destroyed = false
+
+    @Volatile
+    private var networkCallback: ConnectivityManager.NetworkCallback? = null
 
     private val handler = DnsQueryHandler { rules.get() }
 
@@ -155,6 +172,9 @@ class LockSiteVpnService : VpnService() {
         tunnel = descriptor
         controller.setOwnTunnelUp(true)
         observeRules()
+        registerNetworkCallback()
+        // Seed the field with what the builder already declared, and retry if it failed.
+        refreshUnderlyingNetwork()
         readJob = serviceScope.launch { readLoop(descriptor) }
         // Published only once the read loop actually exists.
         controller.publish(ProtectionStatus.ACTIVE)
@@ -171,6 +191,14 @@ class LockSiteVpnService : VpnService() {
         .addDnsServer(VpnConfig.IPV6_DNS)
         .addRoute(VpnConfig.IPV6_DNS, VpnConfig.IPV6_DNS_PREFIX)
         .apply {
+            // Apps that treat a DNS-only tunnel as "offline" are excluded entirely; they
+            // then use the physical network (and its DNS), so they are not filtered.
+            VpnConfig.COMPATIBILITY_BYPASS_PACKAGES.forEach { packageName ->
+                runCatching { addDisallowedApplication(packageName) }
+            }
+            // Declare the physical network underneath the tunnel so Android can carry its
+            // validated state over to the VPN network (ADR 0002, M4).
+            physicalUnderlyingNetwork()?.let { setUnderlyingNetworks(arrayOf(it)) }
             // Tapping the system VPN notification should land somewhere useful.
             setConfigureIntent(
                 PendingIntent.getActivity(
@@ -202,6 +230,100 @@ class LockSiteVpnService : VpnService() {
                 )
             }
         }
+    }
+
+    /**
+     * Keeps the declared underlying network in step with the physical connection.
+     *
+     * Without this the tunnel would stay pinned to whichever network was active at start:
+     * switching between Wi-Fi and mobile data would leave Android validating the VPN against
+     * a dead link, and apps that gate on `NET_CAPABILITY_VALIDATED` would show "offline".
+     *
+     * Registration is best-effort. If it fails, the network declared at `establish()` time
+     * still applies; only live re-evaluation is lost.
+     */
+    private fun registerNetworkCallback() {
+        if (destroyed) return
+        val manager = getSystemService(ConnectivityManager::class.java) ?: return
+        val callback = object : ConnectivityManager.NetworkCallback() {
+            override fun onAvailable(network: Network) = safeRefreshUnderlying()
+
+            override fun onLost(network: Network) = safeRefreshUnderlying()
+
+            override fun onCapabilitiesChanged(
+                network: Network,
+                networkCapabilities: NetworkCapabilities,
+            ) {
+                // Our own tunnel reports capability changes too; ignore them.
+                if (networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_VPN)) return
+                // Capability updates arrive often (signal, bandwidth). Only re-evaluate when
+                // the current underlying link changed or a network just became validated.
+                val validated = networkCapabilities.hasCapability(
+                    NetworkCapabilities.NET_CAPABILITY_VALIDATED,
+                )
+                if (network != underlyingNetwork && !validated) return
+                safeRefreshUnderlying()
+            }
+        }
+        val request = NetworkRequest.Builder()
+            .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+            .addCapability(NetworkCapabilities.NET_CAPABILITY_NOT_VPN)
+            .build()
+        if (runCatching { manager.registerNetworkCallback(request, callback) }.isFailure) return
+        synchronized(callbackLock) {
+            if (destroyed) {
+                // onDestroy ran while we were registering: undo it now instead of leaking.
+                runCatching { manager.unregisterNetworkCallback(callback) }
+                return
+            }
+            networkCallback = callback
+        }
+    }
+
+    /** A callback body must never escape into the Connectivity thread. */
+    private fun safeRefreshUnderlying() {
+        if (destroyed) return
+        runCatching { refreshUnderlyingNetwork() }
+    }
+
+    private fun refreshUnderlyingNetwork() {
+        val next = physicalUnderlyingNetwork()
+        if (next == underlyingNetwork) return
+        val applied = runCatching { setUnderlyingNetworks(next?.let { arrayOf(it) }) }.isSuccess
+        // Commit only on success: otherwise the next callback would see the new value as
+        // already applied and never retry.
+        underlyingNetwork = if (applied) next else null
+    }
+
+    /**
+     * The best physical network to declare as the tunnel's underlying network, or `null`
+     * when none is available. Our own VPN transport is never returned.
+     *
+     * `ConnectivityManager.allNetworks` is deprecated in favour of callback tracking, but it
+     * is the only synchronous way to seed the choice at `establish()` time; the callback
+     * registered afterwards keeps it current.
+     */
+    @Suppress("DEPRECATION")
+    private fun physicalUnderlyingNetwork(): Network? {
+        val manager = getSystemService(ConnectivityManager::class.java) ?: return null
+        val active = manager.activeNetwork
+        val entries = manager.allNetworks.mapNotNull { network ->
+            val capabilities = manager.getNetworkCapabilities(network) ?: return@mapNotNull null
+            UnderlyingCandidate(
+                id = network.hashCode(),
+                isVpn = capabilities.hasTransport(NetworkCapabilities.TRANSPORT_VPN),
+                hasInternet = capabilities.hasCapability(
+                    NetworkCapabilities.NET_CAPABILITY_INTERNET,
+                ),
+                isValidated = capabilities.hasCapability(
+                    NetworkCapabilities.NET_CAPABILITY_VALIDATED,
+                ),
+                isActive = network == active,
+            ) to network
+        }
+        val chosen = selectUnderlying(entries.map { it.first }) ?: return null
+        // Identity, not data-class equality: two networks could theoretically share fields.
+        return entries.firstOrNull { it.first === chosen }?.second
     }
 
     private suspend fun readLoop(descriptor: ParcelFileDescriptor) {
@@ -314,10 +436,20 @@ class LockSiteVpnService : VpnService() {
     }
 
     override fun onDestroy() {
+        destroyed = true
         // Closing the descriptor is what unblocks the read loop; skip it when the loop has
         // already closed its own streams, so the same fd is never closed twice.
         if (!loopFinished) {
             runCatching { tunnel?.close() }
+        }
+        synchronized(callbackLock) {
+            networkCallback?.let { callback ->
+                runCatching {
+                    getSystemService(ConnectivityManager::class.java)
+                        ?.unregisterNetworkCallback(callback)
+                }
+            }
+            networkCallback = null
         }
         readJob?.cancel()
         rulesJob?.cancel()

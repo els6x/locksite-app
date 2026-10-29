@@ -1,8 +1,8 @@
 # Test Plan — LockSite
 
-Status: M3. The pure DNS/packet layer and the filter wiring are covered by JVM unit tests.
-Everything that requires a real network or a real device is still open and is marked as
-such.
+Status: M4. The pure DNS/packet layer, the filter wiring and the underlying-network choice
+are covered by JVM unit tests. Everything that requires a real network or a real device is
+still open and is marked as such.
 
 ## 1. Unit tests (JVM, no device)
 
@@ -31,6 +31,7 @@ such.
 | U-21 | Diagnostics self-test reports failure when every candidate probe is locked | M3 | pass |
 | U-22 | Every `ProtectionStatus` maps to a distinct label and a distinct note | M3 | pass |
 | U-23 | Foreign-VPN resolution: own tunnel never foreign; unknown transport stays unknown | M3 | pass |
+| U-24 | Underlying-network choice: never a VPN transport, prefers validated, null when none | M4 | pass |
 
 ## 2. DNS tests (device / instrumentation)
 
@@ -45,6 +46,8 @@ such.
 | D-07 | Invalid/spoofed response is rejected | M3 | not run |
 | D-08 | DNS over TCP handled or documented as unsupported | M3 | open (documented unsupported) |
 | D-09 | Network change (Wi-Fi ↔ mobile data) keeps filtering or reports failure | M4 | not run |
+| D-10 | App relying on `NET_CAPABILITY_VALIDATED` (e.g. GitHub Mobile) shows online while VPN active after the `setUnderlyingNetworks` fix | M4 | not run |
+| D-11 | GitHub Mobile stays online while protection is active (compatibility bypass) | M4.1 | not run |
 
 Use domains you control or a test domain reserved for this purpose. Never use third-party
 sites as block targets.
@@ -113,3 +116,14 @@ as working.
 | Real device / network | **not executed** — no device available, emulator offline |
 | D-06 / D-07 | **not run** — need a device |
 | D-08 (DNS over TCP) | documented as unsupported; not exercised |
+
+### M4 result
+
+| Item | Result |
+|---|---|
+| `./gradlew testDebugUnitTest` | 103 tests, 0 failures, 0 errors |
+| `./gradlew assembleDebug` | BUILD SUCCESSFUL |
+| `./gradlew lintDebug` | 0 errors, 9 warnings (all pre-existing) |
+| Real device / network | **not executed** — no device available, emulator offline |
+| D-09 / D-10 (network change, connectivity validation) | **not run** — need a device |
+| I-05…I-09 (reboot, conflict, force-stop, corrupt DB, recovery) | **not run** — need a device |

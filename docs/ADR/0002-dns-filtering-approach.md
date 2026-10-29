@@ -106,12 +106,31 @@ than silence, so it fails fast instead of hanging.
   It fails and falls back to plaintext, but it is worth checking on the test device.
 - Direct IP access is not filtered (no DNS query is involved).
 - The service does not call `startForeground`. The system VPN notification keeps the
-  process alive; this must be verified across reboot and process death in M4.
+  process alive; M4 keeps this deliberately and documents the consequence: if the process
+  dies, the status resets truthfully and the user re-activates (`docs/RECOVERY.md`). Boot
+  behaviour is an OS-level choice (Always-on VPN), not an app auto-start.
 - `CONFLICT_WITH_OTHER_VPN` is detected since M3: consent denied while another VPN is
   active, or `establish()` fails with a VPN transport present. Detection needs the
   read-only `ACCESS_NETWORK_STATE` permission and opens no socket. The failed-`establish()`
   case is correlation, not proof of cause: a VPN that has just started may not yet be the
   active network, in which case the failure is reported as ERROR instead.
+- **Apps that gate on Android's connectivity validation (`NET_CAPABILITY_VALIDATED`) can
+  report "offline" while the VPN is active even though internet works.** Android validates
+  the VPN network, which has no internet route, so the probe fails and the capability is
+  absent. A concrete trigger is GitHub Mobile. **Addressed in M4 (unverified on a device):**
+  the builder calls
+  `setUnderlyingNetworks(arrayOf(physicalNetwork))` and a `NetworkCallback` refreshes it on
+  connection changes, so the VPN inherits the underlying network's validated state
+  **without** capturing all traffic. The PRD route rule is preserved. With more than one
+  physical network up, the choice prefers the active link at `establish()` time and then a
+  validated link; ties break deterministically by network id, so it is not guaranteed to
+  equal the system's default physical link in every multi-network case. D-09 on a device is
+  required to confirm that behaviour.
+- **Apps that gate on connectivity validation are excluded from the tunnel.** GitHub Mobile
+  (`com.github.android`) is excluded with `Builder.addDisallowedApplication`; it uses the
+  physical network and its DNS is therefore not filtered. This is a compatibility measure,
+  not a filter bypass: a domain blocked for other apps is still blocked in the browser.
 
-**Verified in M2:** build, unit tests, lint. **Not verified:** real network behaviour on a
-physical device. No claim of working blocking is made until that test is run.
+**Verified through M4:** build, unit tests, lint (0 errors). **Not verified:** real network
+behaviour on a physical device, including the connectivity fix. No claim of working blocking
+is made until that test is run.

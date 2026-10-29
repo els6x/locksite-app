@@ -1,7 +1,8 @@
 # Technical Design — LockSite
 
-Status: M3 complete. The DNS filter is wired to the blocklist, the status is reported from
-the real service, and a diagnostics screen exposes the facts the app can observe.
+Status: M4 complete (implementation). The DNS filter is wired to the blocklist, the status
+is reported from the real service, a diagnostics screen exposes the facts the app can
+observe, and the tunnel declares its underlying network so Android can validate it.
 **Real-network verification on a physical device has not been performed yet**, so no claim
 is made that blocking works end to end.
 
@@ -30,7 +31,7 @@ is made that blocking works end to end.
 
 ## 2. Module boundaries
 
-Single Gradle module (`:app`) for M0–M3. Package boundaries carry the architecture:
+Single Gradle module (`:app`) for M0–M4. Package boundaries carry the architecture:
 
 ```
 com.locksite.app
@@ -144,7 +145,31 @@ client fails fast instead of hanging.
 
 - DNS over TCP (the client's retry after TC=1 gets no answer).
 - IPv6 extension header chains, IP fragmentation reassembly, ICMP.
-- Foreground service / restart-after-boot behaviour (M4).
+- Foreground service: not used. The system VPN notification keeps the service alive; if the
+  process dies, the status resets truthfully and the user re-activates (`docs/RECOVERY.md`).
+  No auto-start after boot, because a stored "active" flag would claim protection the app
+  cannot prove.
+
+### Underlying network and connectivity validation (M4)
+
+A DNS-only tunnel has no default route, so Android has nothing to validate the VPN network
+against. Apps that gate on `NET_CAPABILITY_VALIDATED` — GitHub Mobile is the concrete case —
+then report "offline" even though the underlying internet works.
+
+M4 fixes this without capturing all traffic: the builder calls
+`setUnderlyingNetworks(arrayOf(physicalNetwork))`, and a `ConnectivityManager.NetworkCallback`
+recomputes the choice when the physical connection changes. The selector
+(`vpn/UnderlyingNetworks.kt`) never returns a VPN transport, requires internet capability and
+prefers a validated network; a `null` choice means "platform default". The callback is
+registered after `establish()` and unregistered in `onDestroy()`.
+
+What this does **not** do: it adds no route, forwards no non-DNS traffic, and does not turn
+the filter into a catch-all VPN. It only tells Android which physical link the tunnel sits on.
+
+`setUnderlyingNetworks` does not make the system's validation probe succeed on every device,
+because the probe is sent through the VPN network itself. Apps that gate on the result are
+therefore excluded from the tunnel (`VpnConfig.COMPATIBILITY_BYPASS_PACKAGES`, currently
+GitHub Mobile). They use the physical network and their DNS is not filtered.
 
 ## 6. Status model
 
@@ -198,3 +223,9 @@ every state is covered and testable without Compose.
 ```
 
 `local.properties` holds `sdk.dir` and is never committed.
+
+## 9. Dependency audit
+
+`docs/DEPENDENCIES.md` records every direct dependency, its licence and maintenance status,
+and the decision to hand-write the packet/DNS layer instead of adopting a third-party
+library. Re-run with `./gradlew :app:dependencies --configuration debugRuntimeClasspath`.

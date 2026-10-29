@@ -1,6 +1,6 @@
 # Security & Privacy — LockSite
 
-Scope: M3. This document describes the intended security posture. The DNS filter is
+Scope: M4. This document describes the intended security posture. The DNS filter is
 implemented, wired to the blocklist and unit-tested, but **has not been verified on a real
 network** — nothing here is a claim that blocking currently works end to end.
 
@@ -10,7 +10,7 @@ network** — nothing here is a claim that blocking currently works end to end.
 |---|---|
 | Blocklist never leaves the device | No account, no sync, no backend; the only socket opened is the DNS forwarder |
 | `INTERNET` is used for one thing only | Relaying allowed DNS queries to `1.1.1.1`; no HTTP client exists in the app |
-| `ACCESS_NETWORK_STATE` is read-only | Used only to tell "another VPN owns the tunnel" apart from "the interface failed"; it exposes no network content |
+| `ACCESS_NETWORK_STATE` is read-only | Used to tell "another VPN owns the tunnel" apart from "the interface failed", and to pick the physical network underneath the tunnel; it exposes no network content |
 | No browsing history collected | Only aggregate counts, never QNAME history |
 | No DNS payloads in logs | Log technical status only (state changes, error codes) |
 | No analytics/ads SDK | Prohibited in `AGENTS.md` |
@@ -32,8 +32,9 @@ reviewed here first.
 
 Conflict detection (PRD FR-030) needs to know whether a VPN transport is active on the
 default network; `ConnectivityManager.getNetworkCapabilities` requires this normal
-permission. It is used read-only in two places: classifying a failed `establish()`, and
-showing the "VPN lain" fact on the diagnostics screen. It is never used to inspect traffic.
+permission. It is used read-only in three places: classifying a failed `establish()`,
+showing the "VPN lain" fact on the diagnostics screen, and picking the physical network
+declared as the tunnel's underlying network (M4). It is never used to inspect traffic.
 
 ## 2. Threat model (summary)
 
@@ -80,3 +81,14 @@ harder to reach.
 - Forbidden: hostnames queried, DNS payloads, IP addresses of visited sites, device
   identifiers.
 - Debug-only reset tooling must live in `debug` sources and never ship in release.
+
+## 6. Dependency and logging audit (M4)
+
+- **Dependency audit:** `docs/DEPENDENCIES.md` lists every direct dependency, its licence and
+  maintenance status. No third-party TUN/DNS library, HTTP client, analytics or crash
+  reporter is present.
+- **Logging review:** a repository-wide search for `Log.*` in `app/src/main` returns no
+  matches. The app therefore cannot log hostnames, payloads or browsing history — there is
+  no logging call to leak them.
+- **Recovery:** the user-facing procedure is `docs/RECOVERY.md`; it only uses Android system
+  controls and never adds an in-app bypass.

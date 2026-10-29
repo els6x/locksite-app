@@ -5,6 +5,53 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Fixed — M4.1 (compatibility bypass)
+
+- **Apps that report "offline" while protection is active.** Android validates a VPN network
+  by probing it; a DNS-only tunnel has no route to answer that probe, so
+  `NET_CAPABILITY_VALIDATED` is absent and apps such as GitHub Mobile show offline.
+  `setUnderlyingNetworks` does not change that probe on every device. GitHub Mobile
+  (`com.github.android`) is now excluded from the tunnel via
+  `VpnService.Builder.addDisallowedApplication`, so it uses the physical network and reports
+  online. Its DNS is no longer filtered; every other app is unaffected.
+- `versionName` 0.5.1, `versionCode` 6.
+
+### Added — M4 (resilience and recovery)
+
+- **Connectivity-validation fix.** The tunnel now declares the physical network underneath
+  it (`VpnService.Builder.setUnderlyingNetworks`) and refreshes it through a
+  `NetworkCallback` when the connection changes. Apps that gate on
+  `NET_CAPABILITY_VALIDATED` — GitHub Mobile is the concrete case — are addressed in code;
+  the outcome is **unverified on a device**. The tunnel still routes only DNS, so the PRD
+  route rule is preserved.
+- **Pure underlying-network selector** (`vpn/UnderlyingNetworks.kt`): never chooses a VPN
+  transport, requires internet capability, prefers a validated network, deterministic ties.
+  8 new unit tests (103 total).
+- **`docs/RECOVERY.md`** — restart, process death, force-stop, uninstall and always-on VPN,
+  with what the app will and will not do.
+- **`docs/DEPENDENCIES.md`** — dependency audit with versions, licences and maintenance.
+
+### Changed
+
+- `versionName` 0.5.0, `versionCode` 5.
+- Privacy/logging review: no `Log.*` call exists in `app/src/main`; the logging rules in
+  `docs/SECURITY.md` hold by construction.
+- `docs/TECHNICAL_DESIGN.md` §5 documents the underlying-network behaviour and the
+  network-change path.
+
+### Known limitations after M4
+
+- **Device and network behaviour is still unverified.** Restart, Wi-Fi ↔ cellular, process
+  death and the connectivity fix all need a physical phone; the runbook is in
+  `docs/TEST_PLAN.md` (D-01…D-10, I-01…I-09).
+- DNS over TCP is not implemented: a truncated answer makes the client retry over TCP and
+  that retry gets no answer.
+- DNS-over-TLS/HTTPS, other VPNs, proxies and direct IP access bypass the filter.
+- The service does not call `startForeground`. The system VPN notification keeps it alive;
+  if the process is killed, the status resets truthfully to "not active" and the user must
+  re-activate (`docs/RECOVERY.md`).
+- Light theme only; no dark variant.
+
 ### Added — M3 (filter integration and diagnostics)
 
 - **Blocklist → matcher wiring is exercised, not assumed.** The service takes a snapshot at
@@ -43,6 +90,10 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   so the blocked domain never reaches the filter.
 - The service does not call `startForeground`; survival across reboot and process death is
   an M4 item.
+- **Some apps report "offline" while the VPN is active even though internet works.** Android
+  validates the VPN network (no internet route), so `NET_CAPABILITY_VALIDATED` is absent and
+  apps that gate on it (e.g. GitHub Mobile) show offline. Fix planned for M4 via
+  `VpnService.Builder.setUnderlyingNetworks()` — without capturing all traffic.
 - Light theme only; no dark variant.
 
 ### Added — M2 (VPN/DNS technical spike)
