@@ -54,6 +54,7 @@ fun LockSiteApp(container: AppContainer) {
     val navController = rememberNavController()
     // One source of truth for the display preference, shared by Settings, Home and the list.
     val maskDomains by container.privacyPreferences.maskDomains.collectAsStateWithLifecycle()
+    val adGuardEnabled by container.privacyPreferences.adGuardEnabled.collectAsStateWithLifecycle()
     val startDestination = remember {
         if (container.onboardingStore.isCompleted()) Routes.HOME else Routes.ONBOARDING
     }
@@ -210,6 +211,8 @@ fun LockSiteApp(container: AppContainer) {
                 SettingsScreen(
                     maskDomains = maskDomains,
                     onToggleMask = container.privacyPreferences::setMaskDomains,
+                    adGuardEnabled = adGuardEnabled,
+                    onToggleAdGuard = container.privacyPreferences::setAdGuardEnabled,
                     onOpenDiagnostics = { navController.navigate(Routes.DIAGNOSTICS) },
                 )
             }

@@ -9,7 +9,7 @@ network** — nothing here is a claim that blocking currently works end to end.
 | Invariant | Enforcement |
 |---|---|
 | Blocklist never leaves the device | No account, no sync, no backend; the only socket opened is the DNS forwarder |
-| `INTERNET` is used for one thing only | Relaying allowed DNS queries to `1.1.1.1`; no HTTP client exists in the app |
+| `INTERNET` is used for one thing only | Relaying allowed DNS queries to a public resolver (AdGuard DNS when the switch is on, Cloudflare otherwise; Cloudflare always ends the chain as fallback); no HTTP client exists in the app |
 | `ACCESS_NETWORK_STATE` is read-only | Used to tell "another VPN owns the tunnel" apart from "the interface failed", and to pick the physical network underneath the tunnel; it exposes no network content |
 | No browsing history collected | Only aggregate counts, never QNAME history |
 | No DNS payloads in logs | Log technical status only (state changes, error codes) |

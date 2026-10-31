@@ -42,6 +42,8 @@ import com.locksite.app.ui.theme.Spacing
 fun SettingsScreen(
     maskDomains: Boolean,
     onToggleMask: (Boolean) -> Unit,
+    adGuardEnabled: Boolean,
+    onToggleAdGuard: (Boolean) -> Unit,
     onOpenDiagnostics: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -63,34 +65,18 @@ fun SettingsScreen(
             title = stringResource(R.string.settings_privacy_title),
             body = stringResource(R.string.settings_privacy_body),
         )
-        SoftCard(modifier = Modifier.fillMaxWidth()) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = stringResource(R.string.settings_mask_title),
-                        style = LockSiteTypography.titleMedium,
-                        color = LockSiteColors.Ink,
-                    )
-                    Text(
-                        text = stringResource(R.string.settings_mask_body),
-                        modifier = Modifier.padding(top = Spacing.xs),
-                        style = LockSiteTypography.bodyMedium,
-                        color = LockSiteColors.InkMuted,
-                    )
-                }
-                Switch(
-                    checked = maskDomains,
-                    onCheckedChange = onToggleMask,
-                    colors = SwitchDefaults.colors(
-                        checkedThumbColor = LockSiteColors.YellowInk,
-                        checkedTrackColor = LockSiteColors.Yellow,
-                        uncheckedThumbColor = LockSiteColors.InkMuted,
-                        uncheckedTrackColor = LockSiteColors.SurfaceMuted,
-                        uncheckedBorderColor = LockSiteColors.Outline,
-                    ),
-                )
-            }
-        }
+        ToggleCard(
+            title = stringResource(R.string.settings_mask_title),
+            body = stringResource(R.string.settings_mask_body),
+            checked = maskDomains,
+            onCheckedChange = onToggleMask,
+        )
+        ToggleCard(
+            title = stringResource(R.string.settings_adguard_title),
+            body = stringResource(R.string.settings_adguard_body),
+            checked = adGuardEnabled,
+            onCheckedChange = onToggleAdGuard,
+        )
         InfoCard(
             title = stringResource(R.string.settings_recovery_title),
             body = stringResource(R.string.settings_recovery_body),
@@ -111,6 +97,44 @@ fun SettingsScreen(
     }
 }
 
+/** One setting row: a title, an explanation, and a switch. */
+@Composable
+private fun ToggleCard(
+    title: String,
+    body: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+) {
+    SoftCard(modifier = Modifier.fillMaxWidth()) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = title,
+                    style = LockSiteTypography.titleMedium,
+                    color = LockSiteColors.Ink,
+                )
+                Text(
+                    text = body,
+                    modifier = Modifier.padding(top = Spacing.xs),
+                    style = LockSiteTypography.bodyMedium,
+                    color = LockSiteColors.InkMuted,
+                )
+            }
+            Switch(
+                checked = checked,
+                onCheckedChange = onCheckedChange,
+                colors = SwitchDefaults.colors(
+                    checkedThumbColor = LockSiteColors.YellowInk,
+                    checkedTrackColor = LockSiteColors.Yellow,
+                    uncheckedThumbColor = LockSiteColors.InkMuted,
+                    uncheckedTrackColor = LockSiteColors.SurfaceMuted,
+                    uncheckedBorderColor = LockSiteColors.Outline,
+                ),
+            )
+        }
+    }
+}
+
 @Preview(showBackground = true)
 @Composable
 private fun SettingsPreview() {
@@ -118,6 +142,8 @@ private fun SettingsPreview() {
         SettingsScreen(
             maskDomains = true,
             onToggleMask = {},
+            adGuardEnabled = true,
+            onToggleAdGuard = {},
             onOpenDiagnostics = {},
         )
     }

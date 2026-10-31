@@ -5,6 +5,19 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+### Added — AdGuard DNS filter and Spotify offline fix
+
+- **AdGuard DNS filter (toggleable).** A Settings switch ("Filter AdGuard DNS", default on)
+  makes allowed lookups relay to AdGuard's default-filtering resolvers (`94.140.14.14`,
+  `94.140.15.15`) on top of this app's own blocklist, so ads and trackers are filtered too.
+  Cloudflare stays at the end of the chain as a fallback, so an unreachable AdGuard degrades to
+  plain resolution instead of a dead resolver. The chain is swapped live — the forwarder reads it
+  per query, so no VPN restart is needed. 5 new unit tests (`VpnConfigTest`).
+- **Spotify no longer reports offline.** `com.spotify.music` is now in
+  `COMPATIBILITY_BYPASS_PACKAGES`, like GitHub Mobile: a DNS-only tunnel never becomes
+  `NET_CAPABILITY_VALIDATED`, so apps that gate on it show "offline". Excluded apps use the
+  physical network and are therefore not filtered.
+
 ### Added — M6 (managed-device evaluation) and UI polish
 
 - **M6 evaluated, not enabled.** `docs/ADR/0003-managed-device-mode.md` records why Device

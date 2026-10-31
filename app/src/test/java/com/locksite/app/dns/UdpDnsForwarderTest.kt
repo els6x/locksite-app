@@ -24,7 +24,7 @@ class UdpDnsForwarderTest {
         val expected = responseFor(query)
 
         withServer(reply = { expected }) { port ->
-            val result = UdpDnsForwarder(listOf(loopback), port = port, timeoutMillis = 2000)
+            val result = UdpDnsForwarder({ listOf(loopback) }, port = port, timeoutMillis = 2000)
                 .forward(query)
 
             assertNotNull(result)
@@ -38,7 +38,7 @@ class UdpDnsForwarderTest {
         val wrongId = responseFor(query).also { TestWire.putU16(it, 0, 0x9999) }
 
         withServer(reply = { wrongId }) { port ->
-            val result = UdpDnsForwarder(listOf(loopback), port = port, timeoutMillis = 300)
+            val result = UdpDnsForwarder({ listOf(loopback) }, port = port, timeoutMillis = 300)
                 .forward(query)
 
             assertNull(result)
@@ -51,7 +51,7 @@ class UdpDnsForwarderTest {
         val notAResponse = responseFor(query).also { TestWire.putU16(it, 2, 0x0100) }
 
         withServer(reply = { notAResponse }) { port ->
-            val result = UdpDnsForwarder(listOf(loopback), port = port, timeoutMillis = 300)
+            val result = UdpDnsForwarder({ listOf(loopback) }, port = port, timeoutMillis = 300)
                 .forward(query)
 
             assertNull(result)
@@ -63,7 +63,7 @@ class UdpDnsForwarderTest {
         val query = TestWire.query("example.com")
 
         withServer(reply = null) { port ->
-            val result = UdpDnsForwarder(listOf(loopback), port = port, timeoutMillis = 200)
+            val result = UdpDnsForwarder({ listOf(loopback) }, port = port, timeoutMillis = 200)
                 .forward(query)
 
             assertNull(result)
@@ -72,12 +72,12 @@ class UdpDnsForwarderTest {
 
     @Test
     fun `returns null without any upstream`() {
-        assertNull(UdpDnsForwarder(emptyList()).forward(TestWire.query("example.com")))
+        assertNull(UdpDnsForwarder({ emptyList() }).forward(TestWire.query("example.com")))
     }
 
     @Test
     fun `refuses a query shorter than a dns header`() {
-        assertNull(UdpDnsForwarder(listOf(loopback)).forward(ByteArray(4)))
+        assertNull(UdpDnsForwarder({ listOf(loopback) }).forward(ByteArray(4)))
     }
 
     private fun responseFor(query: ByteArray): ByteArray {

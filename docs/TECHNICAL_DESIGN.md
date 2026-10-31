@@ -101,8 +101,10 @@ MVP uses a local TUN interface with DNS interception:
 2. Packets are parsed for IPv4/IPv6 + UDP DNS only. TCP, fragments and extension headers
    are ignored — they are never dropped, because they are never routed into the tunnel.
 3. Blocked QNAME → local NXDOMAIN reply (no fake IPs, no SOA so nothing is cached).
-4. Allowed QNAME → forwarded to `1.1.1.1` (fallback `1.0.0.1`) over a protected UDP
-   socket, response validated (sender, transaction ID, QR bit) before returning it.
+4. Allowed QNAME → forwarded to the current resolver chain over a protected UDP socket
+   (AdGuard DNS `94.140.14.14`/`94.140.15.15` when the switch is on, then Cloudflare
+   `1.1.1.1`/`1.0.0.1` as fallback; Cloudflare only when the switch is off), response
+   validated (sender, transaction ID, QR bit) before returning it.
 5. A malformed question gets FORMERR; a query that is already a response is dropped.
 
 ### Package layout
@@ -170,7 +172,7 @@ the filter into a catch-all VPN. It only tells Android which physical link the t
 `setUnderlyingNetworks` does not make the system's validation probe succeed on every device,
 because the probe is sent through the VPN network itself. Apps that gate on the result are
 therefore excluded from the tunnel (`VpnConfig.COMPATIBILITY_BYPASS_PACKAGES`, currently
-GitHub Mobile). They use the physical network and their DNS is not filtered.
+GitHub Mobile and Spotify). They use the physical network and their DNS is not filtered.
 
 ## 6. Status model
 

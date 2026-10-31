@@ -32,13 +32,17 @@ it may simply not have been examined yet.
 
 ## 3. Some apps are deliberately not filtered
 
-- `com.github.android` is excluded from the tunnel (`VpnConfig.COMPATIBILITY_BYPASS_PACKAGES`)
-  because a DNS-only VPN made it report "offline". Excluded apps use the physical network, so
-  **their DNS is not filtered**.
+- `com.github.android` and `com.spotify.music` are excluded from the tunnel
+  (`VpnConfig.COMPATIBILITY_BYPASS_PACKAGES`) because a DNS-only VPN made them report "offline".
+  A DNS-only tunnel never becomes `NET_CAPABILITY_VALIDATED`, and apps that gate on that
+  capability show "offline". Excluded apps use the physical network, so **their DNS is not
+  filtered**.
 - The list is hardcoded in this build. There is no setting to add or remove packages. If
   another app misreports connectivity, it has to be added in code and rebuilt.
 - A domain blocked in the browser is still blocked for every other app; only the bypassed
   app's own lookups are unfiltered.
+- A package is only excluded if it was installed when the tunnel was established. Installing a
+  listed app later requires toggling protection off and on again.
 
 ## 4. Protection does not survive a restart or process death
 
@@ -84,8 +88,10 @@ it may simply not have been examined yet.
 ## 9. Privacy boundary
 
 - No account, no cloud, no analytics, no browsing history is recorded or transmitted.
-- While protection is active, DNS queries for **allowed** names are forwarded to Cloudflare
-  (`1.1.1.1`, fallback `1.0.0.1`). That means the resolver sees those names. Blocked names are
+- While protection is active, DNS queries for **allowed** names are forwarded to a public
+  resolver. With the AdGuard switch on (the default) the chain is AdGuard DNS
+  (`94.140.14.14`, `94.140.15.15`) and then Cloudflare (`1.1.1.1`, `1.0.0.1`) as a fallback;
+  with it off, Cloudflare only. Either way the resolver sees those names. Blocked names are
   answered locally and never leave the device.
 
 ## 10. Managed-device hardening is not implemented

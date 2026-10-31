@@ -41,11 +41,30 @@ object VpnConfig {
     const val DNS_PORT = 53
 
     /**
-     * Upstream resolvers for allowed queries. Cloudflare's public resolver is used
-     * because it publishes a privacy policy that excludes selling or profiling DNS data.
-     * The second entry is only tried when the first one times out.
+     * Upstream resolvers for allowed queries when AdGuard filtering is off.
+     *
+     * Cloudflare's public resolver is used because it publishes a privacy policy that
+     * excludes selling or profiling DNS data. The second entry is only tried when the
+     * first one times out.
      */
-    val UPSTREAM_RESOLVERS = listOf("1.1.1.1", "1.0.0.1")
+    val UPSTREAM_CLOUDFLARE = listOf("1.1.1.1", "1.0.0.1")
+
+    /**
+     * AdGuard DNS (default filtering profile). When the user turns AdGuard filtering on,
+     * allowed queries are relayed here so AdGuard's ad/tracker lists apply on top of this
+     * app's own blocklist. Cloudflare is appended as a fallback: if AdGuard is unreachable
+     * on the current network, DNS must still resolve rather than fail shut.
+     */
+    val UPSTREAM_ADGUARD = listOf("94.140.14.14", "94.140.15.15")
+
+    /**
+     * The resolver chain for the current user setting, tried in order.
+     *
+     * With AdGuard on, Cloudflare still ends the chain so a blocked/offline AdGuard cannot
+     * take DNS down with it.
+     */
+    fun upstreams(adGuardEnabled: Boolean): List<String> =
+        if (adGuardEnabled) UPSTREAM_ADGUARD + UPSTREAM_CLOUDFLARE else UPSTREAM_CLOUDFLARE
 
     const val UPSTREAM_TIMEOUT_MS = 3000
 
@@ -54,14 +73,18 @@ object VpnConfig {
      *
      * Android validates a VPN network by probing it. This tunnel has no internet route, so
      * the probe fails and `NET_CAPABILITY_VALIDATED` is absent. Apps that gate on it — GitHub
-     * Mobile is the known case — show "offline" even though the underlying internet works.
-     * `setUnderlyingNetworks` does not change that probe on every device, so these packages
-     * are excluded entirely and use the physical network instead.
+     * Mobile and Spotify are the known cases — show "offline" even though the underlying
+     * internet works. `setUnderlyingNetworks` does not change that probe on every device, so
+     * these packages are excluded entirely and use the physical network instead.
      *
-     * Consequence: their DNS is not filtered. That is acceptable because they are not block
-     * targets; a domain blocked in the browser is still blocked for every other app.
+     * The list is intentionally short: every package here is also outside the filter, so a
+     * domain blocked in the browser stays blocked everywhere else. Add a package only when it
+     * has been observed to fail; a speculative entry silently removes filtering for that app.
      */
-    val COMPATIBILITY_BYPASS_PACKAGES = listOf("com.github.android")
+    val COMPATIBILITY_BYPASS_PACKAGES = listOf(
+        "com.github.android",
+        "com.spotify.music",
+    )
 
     /** Bounds how many lookups can be in flight before the read loop applies backpressure. */
     const val MAX_CONCURRENT_QUERIES = 8

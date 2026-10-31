@@ -85,6 +85,12 @@ Rejected: reading the underlying network's DNS servers. Once a VPN is up, the li
 properties describe the VPN, so this needs continuous tracking of the non-VPN network —
 more moving parts, and it silently changes behaviour when the user roams.
 
+**Amendment (2026-10-31):** the upstream is now a chain chosen by a user setting. With the
+AdGuard switch on (the default), allowed queries go to AdGuard DNS (`94.140.14.14`,
+`94.140.15.15`) and then Cloudflare as a fallback; with it off, Cloudflare only. Cloudflare
+still ends every chain, so the original privacy and availability rationale stands — AdGuard
+is an opt-out filtering layer, not a replacement for the fallback.
+
 ## Decision 5 — MTU 4096
 
 The tunnel carries only DNS. A UDP answer larger than one tunnel packet cannot be written

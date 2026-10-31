@@ -74,6 +74,7 @@ class LockSiteVpnService : VpnService() {
     private var startJob: Job? = null
     private var readJob: Job? = null
     private var rulesJob: Job? = null
+    private var upstreamJob: Job? = null
 
     /** The physical network the tunnel sits on; `null` means "platform default". */
     @Volatile
@@ -90,16 +91,30 @@ class LockSiteVpnService : VpnService() {
 
     private val handler = DnsQueryHandler { rules.get() }
 
+    /** The resolver chain currently in effect; swapped when the AdGuard setting changes. */
+    private val activeUpstreams = AtomicReference<List<InetAddress>>(emptyList())
+
+    private val cloudflareUpstreams: List<InetAddress> by lazy {
+        parseUpstreams(VpnConfig.upstreams(adGuardEnabled = false))
+    }
+
+    private val adGuardUpstreams: List<InetAddress> by lazy {
+        parseUpstreams(VpnConfig.upstreams(adGuardEnabled = true))
+    }
+
     private val forwarder: UdpDnsForwarder by lazy {
         UdpDnsForwarder(
-            upstreams = VpnConfig.UPSTREAM_RESOLVERS.mapNotNull { address ->
-                // Literal addresses only, so this cannot recurse into DNS.
-                runCatching { InetAddress.getByName(address) }.getOrNull()
-            },
+            upstreams = { activeUpstreams.get() },
             protector = SocketProtector { socket -> protect(socket) },
             timeoutMillis = VpnConfig.UPSTREAM_TIMEOUT_MS,
         )
     }
+
+    /** Literal addresses only, so this cannot recurse into DNS. */
+    private fun parseUpstreams(addresses: List<String>): List<InetAddress> =
+        addresses.mapNotNull { address ->
+            runCatching { InetAddress.getByName(address) }.getOrNull()
+        }
 
     private val ourDnsAddresses: List<ByteArray> by lazy {
         listOf(
@@ -185,7 +200,13 @@ class LockSiteVpnService : VpnService() {
 
         tunnel = descriptor
         controller.setOwnTunnelUp(true)
+        // Seed the chain synchronously so the first lookup cannot race the preference flow.
+        activeUpstreams.set(
+            if (container.privacyPreferences.adGuardEnabled.value) adGuardUpstreams
+            else cloudflareUpstreams,
+        )
         observeRules()
+        observeUpstream()
         registerNetworkCallback()
         // Seed the field with what the builder already declared, and retry if it failed.
         refreshUnderlyingNetwork()
@@ -242,6 +263,28 @@ class LockSiteVpnService : VpnService() {
                     ProtectionStatus.ERROR,
                     getString(R.string.vpn_error_rules_stale),
                 )
+            }
+        }
+    }
+
+    /**
+     * Keeps the resolver chain in step with the AdGuard setting without a restart.
+     *
+     * The forwarder reads [activeUpstreams] per query, so the swap is immediate. A failure
+     * here only loses live switching; the chain seeded at start-up stays in effect.
+     */
+    private fun observeUpstream() {
+        upstreamJob = serviceScope.launch {
+            try {
+                container.privacyPreferences.adGuardEnabled.collect { enabled ->
+                    activeUpstreams.set(
+                        if (enabled) adGuardUpstreams else cloudflareUpstreams,
+                    )
+                }
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (error: Exception) {
+                // Keep the last good chain: DNS still resolves, just not with the new setting.
             }
         }
     }
@@ -473,6 +516,7 @@ class LockSiteVpnService : VpnService() {
         }
         readJob?.cancel()
         rulesJob?.cancel()
+        upstreamJob?.cancel()
         startJob?.cancel()
         tunnel = null
         container.vpnController.setOwnTunnelUp(false)

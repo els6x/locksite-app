@@ -102,9 +102,11 @@
     <string name="settings_about_title">Tentang aplikasi</string>
     <string name="settings_version">Versi %1$s</string>
     <string name="settings_privacy_title">Privasi</string>
-    <string name="settings_privacy_body">Semua aturan disimpan di perangkat ini. Tidak ada akun, cloud, atau analytics. Tidak ada riwayat situs yang dicatat. Saat perlindungan aktif, query DNS untuk domain yang tidak dikunci diteruskan ke resolver 1.1.1.1 agar situs lain tetap bisa dibuka.</string>
+    <string name="settings_privacy_body">Semua aturan disimpan di perangkat ini. Tidak ada akun, cloud, atau analytics. Tidak ada riwayat situs yang dicatat. Saat perlindungan aktif, query DNS untuk domain yang tidak dikunci diteruskan ke resolver publik (AdGuard atau Cloudflare, sesuai pengaturan) agar situs lain tetap bisa dibuka.</string>
     <string name="settings_mask_title">Sembunyikan nama domain</string>
     <string name="settings_mask_body">Sensor nama domain di Beranda dan Daftar, misalnya saat layar terlihat orang lain. Pencarian dan filter tetap memakai nama asli.</string>
+    <string name="settings_adguard_title">Filter AdGuard DNS</string>
+    <string name="settings_adguard_body">Query yang tidak diblokir diteruskan ke AdGuard DNS agar iklan dan pelacak ikut tersaring. Matikan untuk memakai Cloudflare (1.1.1.1) saja. Berlaku pada pencarian DNS berikutnya.</string>
     <string name="settings_recovery_title">Cara pemulihan</string>
     <string name="settings_recovery_body">Buka Pengaturan Android → Jaringan → VPN → matikan LockSite. Jika masih macet, hentikan paksa aplikasi lewat pengaturan sistem. Langkah ini bukan fitur untuk membuka blokir dari dalam aplikasi.</string>
     <string name="settings_limit_title">Batas perlindungan</string>

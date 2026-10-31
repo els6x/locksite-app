@@ -21,11 +21,14 @@ fun interface SocketProtector {
  * microseconds, and in exchange there is no shared mutable state, no lock contention and
  * no chance of one slow lookup corrupting another. Query volume on a phone is tiny.
  *
- * IPv4 literals only: the configured upstreams are fixed addresses, so no resolution is
+ * Upstreams are supplied lazily per query, so the caller can switch resolver chains
+ * (for example AdGuard on/off) without rebuilding the tunnel.
+ *
+ * IPv4 literals only: the configured upstreams are address literals, so no resolution is
  * needed and nothing here can recurse into the filter itself.
  */
 class UdpDnsForwarder(
-    private val upstreams: List<InetAddress>,
+    private val upstreams: () -> List<InetAddress>,
     private val protector: SocketProtector? = null,
     private val timeoutMillis: Int = DEFAULT_TIMEOUT_MS,
     private val port: Int = DEFAULT_DNS_PORT,
@@ -34,7 +37,9 @@ class UdpDnsForwarder(
     /** @return the raw response, or `null` when every upstream failed or timed out. */
     fun forward(query: ByteArray): ByteArray? {
         if (query.size < DnsMessages.HEADER_SIZE) return null
-        for (upstream in upstreams) {
+        // Read per query so a settings change (AdGuard on/off) applies to the next lookup
+        // without tearing the tunnel down.
+        for (upstream in upstreams()) {
             val answer = exchange(upstream, query)
             if (answer != null) return answer
         }
